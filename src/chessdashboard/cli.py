@@ -1,6 +1,8 @@
 """Command-line interface for chessdashboard."""
 
 import os
+import subprocess
+import sys
 
 import click
 from dotenv import load_dotenv
@@ -144,6 +146,25 @@ def list_cmd(ctx: click.Context, platform: str | None) -> None:
             f"{game_id:<6} {white_disp:<20} {black_disp:<20} {date_str:<12} "
             f"{result or '-':<10} {eco or '-':<6} {tc or '-':<10} {source}"
         )
+
+
+@main.command()
+@click.option("--port", default=8501, help="Port to run the dashboard on.")
+@click.pass_context
+def dashboard(ctx: click.Context, port: int) -> None:
+    """Launch the Streamlit analytics dashboard."""
+    from .database import DEFAULT_DB_PATH
+
+    db_path = ctx.obj["db_path"] or DEFAULT_DB_PATH
+    dashboard_path = str(Path(__file__).parent / "dashboard.py")
+    subprocess.run(
+        [
+            sys.executable, "-m", "streamlit", "run", dashboard_path,
+            "--server.port", str(port),
+            "--", "--db", str(db_path),
+        ],
+        check=False,
+    )
 
 
 if __name__ == "__main__":
