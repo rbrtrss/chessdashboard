@@ -8,19 +8,30 @@ CLI tool to fetch chess games from Lichess and Chess.com, store in DuckDB, and a
 uv sync
 ```
 
+## Configuration
+
+Create a `.env` file in the project root with your usernames:
+
+```bash
+LICHESS_USERNAME=your_lichess_username
+CHESSCOM_USERNAME=your_chesscom_username
+```
+
+The `fetch` command uses these as defaults when `--username` is omitted. The dashboard filters games to these usernames.
+
 ## Usage
 
 ### Fetch games
 
 ```bash
-# Fetch from Lichess
-uv run chessdashboard fetch <username> --platform lichess
+# Fetch from both platforms using .env usernames
+uv run chessdashboard fetch
 
-# Fetch from Chess.com
-uv run chessdashboard fetch <username> --platform chesscom
+# Fetch from one platform
+uv run chessdashboard fetch --platform lichess
 
-# Limit number of games
-uv run chessdashboard fetch <username> --platform lichess --max 50
+# Explicit username and limit
+uv run chessdashboard fetch -u <username> --platform lichess --max 50
 ```
 
 ### List stored games
@@ -28,6 +39,16 @@ uv run chessdashboard fetch <username> --platform lichess --max 50
 ```bash
 uv run chessdashboard list
 uv run chessdashboard list --platform lichess
+```
+
+### Launch dashboard
+
+```bash
+# Requires dbt models: cd chessdashboard_dbt && uv run dbt run
+uv run chessdashboard dashboard
+
+# Custom port
+uv run chessdashboard dashboard --port 8080
 ```
 
 ## dbt Usage

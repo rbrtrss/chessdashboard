@@ -21,12 +21,16 @@ chessdashboard fetches chess games from Lichess and Chess.com APIs, stores them 
 # Sync dependencies
 uv sync
 
-# Fetch games
-uv run chessdashboard fetch <username> --platform lichess [--max N]
-uv run chessdashboard fetch <username> --platform chesscom
+# Fetch games (uses .env usernames by default)
+uv run chessdashboard fetch                                    # both platforms
+uv run chessdashboard fetch --platform lichess [--max N]       # one platform
+uv run chessdashboard fetch -u <username> --platform lichess   # explicit user
 
 # List stored games
 uv run chessdashboard list [--platform lichess|chesscom]
+
+# Launch Streamlit dashboard (requires dbt models)
+uv run chessdashboard dashboard [--port 8501]
 
 # Run dbt models
 cd chessdashboard_dbt && uv run dbt run
@@ -37,7 +41,8 @@ cd chessdashboard_dbt && uv run dbt test
 
 The codebase follows a simple layered structure in `src/chessdashboard/`:
 
-- **cli.py**: Click-based CLI entry point. Defines commands (fetch, list) and orchestrates the other modules.
+- **cli.py**: Click-based CLI entry point. Defines commands (fetch, list, dashboard) and orchestrates the other modules.
+- **dashboard.py**: Streamlit analytics dashboard. Displays KPIs, player stats, opening stats, win rate over time, and recent games for .env usernames.
 - **schema.py**: DDL definitions for the star schema database structure.
 - **database.py**: DuckDB persistence layer using a star schema with `_get_or_create` pattern.
 - **lichess_client.py**: Streams games from Lichess API as NDJSON via httpx.
@@ -61,4 +66,4 @@ Located in `chessdashboard_dbt/`. Transforms raw star schema into analytics-read
 - **opening_stats**: win rates by ECO code and source
 
 ### Commit Guidelines
-- Before commiting changes, **ALWAYS** use the @.claude/skills/generating-commit-messages skill to generate commit messages
+- Before committing changes, **ALWAYS** use the @.claude/skills/generating-commit-messages skill to generate commit messages
