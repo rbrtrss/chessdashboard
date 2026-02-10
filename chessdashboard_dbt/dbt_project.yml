@@ -1,0 +1,13 @@
+name: chessdashboard_dbt
+version: "1.0.0"
+
+profile: chessdashboard_dbt
+
+model-paths: ["models"]
+
+models:
+  chessdashboard_dbt:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

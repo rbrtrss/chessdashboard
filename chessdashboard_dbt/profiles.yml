@@ -1,0 +1,6 @@
+chessdashboard_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ~/.chessdashboard/games.duckdb

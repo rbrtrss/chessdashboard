@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: player_stats
+    description: Win/loss/draw statistics aggregated per player and source
+    columns:
+      - name: player
+        description: Player username
+        data_tests:
+          - not_null
+
+  - name: opening_stats
+    description: Game statistics aggregated by ECO opening code and source
+    columns:
+      - name: eco
+        description: ECO opening code
+        data_tests:
+          - not_null

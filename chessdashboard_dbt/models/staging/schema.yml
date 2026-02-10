@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: stg_games
+    description: Denormalized game data — one row per game with all dimensions joined
+    columns:
+      - name: game_id
+        description: Primary key
+        data_tests:
+          - unique
+          - not_null
+      - name: result
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1-0', '0-1', '1/2-1/2']

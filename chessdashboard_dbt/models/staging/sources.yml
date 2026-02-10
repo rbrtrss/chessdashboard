@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: chessdashboard
+    schema: main
+    description: Raw star schema tables created by the chessdashboard Python CLI
+    tables:
+      - name: fact_games
+        description: Central fact table — one row per chess game
+      - name: dim_player
+        description: Player dimension — unique players by username
+      - name: dim_date
+        description: Date dimension — game dates
+      - name: dim_event
+        description: Event dimension — tournament/match info
+      - name: dim_result
+        description: Result dimension — game outcomes (1-0, 0-1, 1/2-1/2)
+      - name: dim_source
+        description: Source dimension — platform origin (lichess, chesscom)
