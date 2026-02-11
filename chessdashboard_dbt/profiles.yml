@@ -3,4 +3,4 @@ chessdashboard_dbt:
   outputs:
     dev:
       type: duckdb
-      path: ~/.chessdashboard/games.duckdb
+      path: "{{ env_var('DUCKDB_PATH', '~/.chessdashboard/games.duckdb') }}"

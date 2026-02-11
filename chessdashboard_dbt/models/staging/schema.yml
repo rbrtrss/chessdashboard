@@ -12,5 +12,4 @@ models:
       - name: result
         data_tests:
           - accepted_values:
-              arguments:
-                values: ['1-0', '0-1', '1/2-1/2']
+              values: ['1-0', '0-1', '1/2-1/2']

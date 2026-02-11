@@ -1,0 +1,12 @@
+FROM apache/airflow:2.10.5-python3.12
+
+# Install uv (needed as build backend) and astronomer-cosmos
+RUN pip install --no-cache-dir uv "astronomer-cosmos[dbt-duckdb]>=1.3.0"
+
+# Copy and install chessdashboard package
+COPY --chown=airflow:root pyproject.toml README.md /opt/airflow/chessdashboard_pkg/
+COPY --chown=airflow:root src /opt/airflow/chessdashboard_pkg/src
+RUN pip install --no-cache-dir /opt/airflow/chessdashboard_pkg
+
+# Ensure DuckDB data directory exists
+RUN mkdir -p /home/airflow/.chessdashboard
