@@ -11,23 +11,39 @@ CHESSCOM_API_BASE = "https://api.chess.com/pub"
 USER_AGENT = "chessdashboard/0.1.0 (https://github.com/chessdashboard)"
 
 
-def _opening_name_from_eco_url(eco_url: str | None) -> str | None:
-    """Derive a human-readable opening name from a Chess.com ECOUrl slug.
+_OPENING_MARKERS = ("Defense", "Game", "Gambit", "Attack", "Opening", "System")
+
+
+def _parse_eco_url(eco_url: str | None) -> tuple[str | None, str | None]:
+    """Derive opening name and variation from a Chess.com ECOUrl slug.
 
     Chess.com encodes openings as URL slugs like:
       Philidor-Defense-Nimzowitsch-Variation-4.Nc3
-    Strip trailing move notation (parts starting with a digit) and replace
-    hyphens with spaces: → "Philidor Defense Nimzowitsch Variation"
+    Strip trailing move notation (parts starting with a digit), replace
+    hyphens with spaces, then split at the first opening-type keyword that
+    has more words following it:
+      "Philidor Defense Nimzowitsch Variation" → ("Philidor Defense", "Nimzowitsch Variation")
+      "Vienna Game" → ("Vienna Game", None)
     """
     if not eco_url:
-        return None
+        return None, None
     slug = eco_url.rstrip("/").split("/")[-1]
     parts = []
     for part in slug.split("-"):
         if re.match(r"^\d+\.", part):
             break
         parts.append(part)
-    return " ".join(parts) if parts else None
+    full = " ".join(parts) if parts else None
+    if not full:
+        return None, None
+    for marker in _OPENING_MARKERS:
+        if f" {marker} " in full:
+            idx = full.index(f" {marker} ")
+            split = idx + len(marker) + 1  # include marker in name
+            return full[:split].strip(), full[split:].strip() or None
+        if full.endswith(f" {marker}") or full == marker:
+            return full, None
+    return full, None
 
 
 def _parse_pgn_game(pgn_text: str, username: str) -> dict | None:
@@ -60,6 +76,7 @@ def _parse_pgn_game(pgn_text: str, username: str) -> dict | None:
 
     white = headers.get("White", "Unknown")
     black = headers.get("Black", "Unknown")
+    _name, _variation = _parse_eco_url(headers.get("ECOUrl"))
 
     return {
         "white": white,
@@ -70,8 +87,8 @@ def _parse_pgn_game(pgn_text: str, username: str) -> dict | None:
         "day": day,
         "event": headers.get("Event"),
         "eco": headers.get("ECO"),
-        "opening_name": _opening_name_from_eco_url(headers.get("ECOUrl")),
-        "opening_variation": None,
+        "opening_name": _name,
+        "opening_variation": _variation,
         "time_control": headers.get("TimeControl"),
         "url": headers.get("Link"),
         "moves": " ".join(moves),

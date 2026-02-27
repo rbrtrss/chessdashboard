@@ -37,6 +37,9 @@ def _parse_game(data: dict) -> dict:
 
     year, month, day = _epoch_to_date(data.get("createdAt"))
 
+    _raw = data.get("opening", {}).get("name")
+    _name, _variation = _raw.split(": ", 1) if _raw and ": " in _raw else (_raw, None)
+
     return {
         "white": white_user.get("name", "Anonymous"),
         "black": black_user.get("name", "Anonymous"),
@@ -46,8 +49,8 @@ def _parse_game(data: dict) -> dict:
         "day": day,
         "event": data.get("perf", "unknown"),
         "eco": data.get("opening", {}).get("eco"),
-        "opening_name": data.get("opening", {}).get("name"),
-        "opening_variation": None,
+        "opening_name": _name,
+        "opening_variation": _variation,
         "time_control": data.get("clock", {}).get("initial", ""),
         "url": f"https://lichess.org/{data['id']}",
         "moves": data.get("moves", ""),
