@@ -1,6 +1,7 @@
 """Chess.com API client — fetches games via monthly archives."""
 
 import io
+import re
 from collections.abc import Iterator
 
 import chess.pgn
@@ -8,6 +9,25 @@ import httpx
 
 CHESSCOM_API_BASE = "https://api.chess.com/pub"
 USER_AGENT = "chessdashboard/0.1.0 (https://github.com/chessdashboard)"
+
+
+def _opening_name_from_eco_url(eco_url: str | None) -> str | None:
+    """Derive a human-readable opening name from a Chess.com ECOUrl slug.
+
+    Chess.com encodes openings as URL slugs like:
+      Philidor-Defense-Nimzowitsch-Variation-4.Nc3
+    Strip trailing move notation (parts starting with a digit) and replace
+    hyphens with spaces: → "Philidor Defense Nimzowitsch Variation"
+    """
+    if not eco_url:
+        return None
+    slug = eco_url.rstrip("/").split("/")[-1]
+    parts = []
+    for part in slug.split("-"):
+        if re.match(r"^\d+\.", part):
+            break
+        parts.append(part)
+    return " ".join(parts) if parts else None
 
 
 def _parse_pgn_game(pgn_text: str, username: str) -> dict | None:
@@ -50,8 +70,8 @@ def _parse_pgn_game(pgn_text: str, username: str) -> dict | None:
         "day": day,
         "event": headers.get("Event"),
         "eco": headers.get("ECO"),
-        "opening_name": headers.get("Opening"),
-        "opening_variation": headers.get("Variation"),
+        "opening_name": _opening_name_from_eco_url(headers.get("ECOUrl")),
+        "opening_variation": None,
         "time_control": headers.get("TimeControl"),
         "url": headers.get("Link"),
         "moves": " ".join(moves),
