@@ -50,7 +50,7 @@ def _query(conn, sql: str, params=None):
 st.set_page_config(page_title="Chess Dashboard", page_icon="♟", layout="wide")
 col_title, col_refresh = st.columns([8, 1])
 col_title.title("Chess Dashboard")
-if col_refresh.button("Refresh", use_container_width=True):
+if col_refresh.button("Refresh", width="stretch"):
     st.cache_resource.clear()
     st.rerun()
 
@@ -172,7 +172,7 @@ ps_df = _query(conn, f"SELECT * FROM player_stats{ps_clause}")
 if ps_df.empty:
     st.info("No player stats available.")
 else:
-    st.dataframe(ps_df, use_container_width=True, hide_index=True)
+    st.dataframe(ps_df, width="stretch", hide_index=True)
 
 # ---------------------------------------------------------------------------
 # 3. Opening Stats + bar chart
@@ -187,7 +187,7 @@ os_df = _query(conn, f"SELECT * FROM opening_stats{os_clause}")
 if os_df.empty:
     st.info("No opening stats available.")
 else:
-    st.dataframe(os_df, use_container_width=True, hide_index=True)
+    st.dataframe(os_df, width="stretch", hide_index=True)
 
     top = os_df[os_df["total_games"] >= 5].nlargest(10, "white_win_pct")
     if not top.empty:
@@ -255,4 +255,4 @@ rg_df = _query(conn, rg_sql)
 if rg_df.empty:
     st.info("No games to display.")
 else:
-    st.dataframe(rg_df, use_container_width=True, hide_index=True)
+    st.dataframe(rg_df, width="stretch", hide_index=True)
