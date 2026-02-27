@@ -48,7 +48,11 @@ def _query(conn, sql: str, params=None):
 # ---------------------------------------------------------------------------
 
 st.set_page_config(page_title="Chess Dashboard", page_icon="♟", layout="wide")
-st.title("Chess Dashboard")
+col_title, col_refresh = st.columns([8, 1])
+col_title.title("Chess Dashboard")
+if col_refresh.button("Refresh", use_container_width=True):
+    st.cache_resource.clear()
+    st.rerun()
 
 conn = get_conn()
 
