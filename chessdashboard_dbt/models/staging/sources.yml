@@ -17,3 +17,5 @@ sources:
         description: Result dimension — game outcomes (1-0, 0-1, 1/2-1/2)
       - name: dim_source
         description: Source dimension — platform origin (lichess, chesscom)
+      - name: dim_opening
+        description: Opening dimension — ECO code with name and variation (SCD Type 1)

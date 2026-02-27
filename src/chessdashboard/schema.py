@@ -41,6 +41,16 @@ CREATE TABLE IF NOT EXISTS dim_source (
 );
 """
 
+DIM_OPENING_DDL = """
+CREATE TABLE IF NOT EXISTS dim_opening (
+    eco        TEXT PRIMARY KEY,
+    name       TEXT,
+    variation  TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+    updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
+"""
+
 FACT_GAMES_DDL = """
 CREATE TABLE IF NOT EXISTS fact_games (
     game_id INTEGER NOT NULL,
@@ -71,5 +81,6 @@ ALL_DDL = [
     DIM_EVENT_DDL,
     DIM_RESULT_DDL,
     DIM_SOURCE_DDL,
+    DIM_OPENING_DDL,
     FACT_GAMES_DDL,
 ]

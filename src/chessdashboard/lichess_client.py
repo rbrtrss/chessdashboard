@@ -46,6 +46,8 @@ def _parse_game(data: dict) -> dict:
         "day": day,
         "event": data.get("perf", "unknown"),
         "eco": data.get("opening", {}).get("eco"),
+        "opening_name": data.get("opening", {}).get("name"),
+        "opening_variation": None,
         "time_control": data.get("clock", {}).get("initial", ""),
         "url": f"https://lichess.org/{data['id']}",
         "moves": data.get("moves", ""),

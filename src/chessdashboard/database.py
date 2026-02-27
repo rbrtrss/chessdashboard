@@ -142,6 +142,32 @@ def _get_or_create_source(conn: duckdb.DuckDBPyConnection, source: str) -> int:
     return result[0]
 
 
+def _get_or_create_opening(
+    conn: duckdb.DuckDBPyConnection,
+    eco: str,
+    name: str | None,
+    variation: str | None,
+) -> None:
+    """Insert or update an opening in dim_opening (SCD Type 1)."""
+    row = conn.execute("SELECT eco FROM dim_opening WHERE eco = ?", [eco]).fetchone()
+    if row:
+        conn.execute(
+            """
+            UPDATE dim_opening
+            SET name      = COALESCE(?, name),
+                variation = COALESCE(?, variation),
+                updated_at = current_timestamp
+            WHERE eco = ?
+            """,
+            [name, variation, eco],
+        )
+    else:
+        conn.execute(
+            "INSERT INTO dim_opening (eco, name, variation) VALUES (?, ?, ?)",
+            [eco, name, variation],
+        )
+
+
 def insert_game(
     conn: duckdb.DuckDBPyConnection,
     source: str,
@@ -156,6 +182,8 @@ def insert_game(
     time_control: str | None,
     url: str | None,
     moves: str,
+    opening_name: str | None = None,
+    opening_variation: str | None = None,
 ) -> int:
     """Insert a game into the database and return its ID."""
     source_id = _get_or_create_source(conn, source)
@@ -164,6 +192,8 @@ def insert_game(
     date_id = _get_or_create_date(conn, year, month, day)
     event_id = _get_or_create_event(conn, event)
     result_id = _get_or_create_result(conn, result)
+    if eco:
+        _get_or_create_opening(conn, eco, opening_name, opening_variation)
 
     result_row = conn.execute(
         """

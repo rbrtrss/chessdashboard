@@ -62,6 +62,8 @@ def _fetch_platform(
             time_control=game.get("time_control"),
             url=url,
             moves=game.get("moves", ""),
+            opening_name=game.get("opening_name"),
+            opening_variation=game.get("opening_variation"),
         )
         loaded += 1
         if max_games and loaded >= max_games:

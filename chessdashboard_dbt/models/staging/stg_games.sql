@@ -35,6 +35,10 @@ select
     -- source
     s.source,
 
+    -- opening
+    o.name as opening_name,
+    o.variation as opening_variation,
+
     -- derived
     length(g.moves) - length(replace(g.moves, ' ', '')) + 1 as move_count
 
@@ -45,3 +49,4 @@ left join {{ source('chessdashboard', 'dim_player') }} pw on g.playing_white_id 
 left join {{ source('chessdashboard', 'dim_player') }} pb on g.playing_black_id = pb.player_id
 left join {{ source('chessdashboard', 'dim_result') }} r on g.result_id = r.result_id
 left join {{ source('chessdashboard', 'dim_source') }} s on g.source_id = s.source_id
+left join {{ source('chessdashboard', 'dim_opening') }} o on g.eco = o.eco

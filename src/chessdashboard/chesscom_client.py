@@ -50,6 +50,8 @@ def _parse_pgn_game(pgn_text: str, username: str) -> dict | None:
         "day": day,
         "event": headers.get("Event"),
         "eco": headers.get("ECO"),
+        "opening_name": headers.get("Opening"),
+        "opening_variation": headers.get("Variation"),
         "time_control": headers.get("TimeControl"),
         "url": headers.get("Link"),
         "moves": " ".join(moves),

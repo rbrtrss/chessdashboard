@@ -2,6 +2,7 @@
 
 select
     eco,
+    opening_name,
     source,
     count(*) as total_games,
     count(*) filter (where result = '1-0') as white_wins,
@@ -12,5 +13,5 @@ select
     round(avg(move_count), 1) as avg_moves
 from {{ ref('stg_games') }}
 where eco is not null
-group by eco, source
+group by eco, opening_name, source
 order by total_games desc
