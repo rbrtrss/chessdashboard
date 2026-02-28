@@ -63,7 +63,8 @@ if conn is None:
     )
     st.stop()
 
-required_tables = ["stg_games", "player_stats", "opening_stats"]
+required_tables = ["stg_games", "player_stats", "opening_stats",
+                   "monthly_win_rate", "time_control_breakdown"]
 missing = [t for t in required_tables if not _table_exists(conn, t)]
 if missing:
     st.warning(
@@ -97,20 +98,25 @@ platform = st.selectbox("Platform", ["All", "lichess", "chesscom"])
 _quoted_env_users = ", ".join(f"'{u}'" for u in env_users)
 
 
-def _user_in_list(prefix: str = "") -> str:
-    """SQL fragment: white or black player is one of the env usernames."""
-    return (
-        f"({prefix}white_player IN ({_quoted_env_users}) "
-        f"OR {prefix}black_player IN ({_quoted_env_users}))"
-    )
-
-
-def _where(alias: str = "") -> str:
-    """Build WHERE clause from env usernames and platform filter."""
-    prefix = f"{alias}." if alias else ""
-    clauses = [_user_in_list(prefix)]
+def _player_where(extra: str = "") -> str:
+    """WHERE clause for models with a `player` column."""
+    clauses = [f"player IN ({_quoted_env_users})"]
     if platform != "All":
-        clauses.append(f"{prefix}source = '{platform}'")
+        clauses.append(f"source = '{platform}'")
+    if extra:
+        clauses.append(extra)
+    return " WHERE " + " AND ".join(clauses)
+
+
+def _stg_where() -> str:
+    """WHERE clause for stg_games (white/black player columns)."""
+    user_filter = (
+        f"(white_player IN ({_quoted_env_users}) "
+        f"OR black_player IN ({_quoted_env_users}))"
+    )
+    clauses = [user_filter]
+    if platform != "All":
+        clauses.append(f"source = '{platform}'")
     return " WHERE " + " AND ".join(clauses)
 
 
@@ -120,38 +126,20 @@ def _where(alias: str = "") -> str:
 
 st.header("Overview")
 
-kpi_df = _query(conn, f"SELECT COUNT(*) AS cnt FROM stg_games{_where()}")
-total_games = int(kpi_df["cnt"].iloc[0])
+kpi_df = _query(
+    conn,
+    f"SELECT source, total_games, total_wins, win_rate FROM player_stats{_player_where()}",
+)
 
-if total_games == 0:
+if kpi_df.empty:
     st.info("No games match the current filters.")
     st.stop()
 
-win_rate_sql = f"""
-    SELECT ROUND(
-        SUM(CASE WHEN winner IN ({_quoted_env_users}) THEN 1 ELSE 0 END)::FLOAT
-        / COUNT(*) * 100, 1
-    ) AS wr
-    FROM stg_games{_where()}
-"""
-
-wr_df = _query(conn, win_rate_sql)
-win_rate = wr_df["wr"].iloc[0] if wr_df["wr"].iloc[0] is not None else 0
-
-lichess_cnt = int(
-    _query(
-        conn,
-        f"SELECT COUNT(*) AS c FROM stg_games{_where()}"
-        " AND source = 'lichess'",
-    )["c"].iloc[0]
-)
-chesscom_cnt = int(
-    _query(
-        conn,
-        f"SELECT COUNT(*) AS c FROM stg_games{_where()}"
-        " AND source = 'chesscom'",
-    )["c"].iloc[0]
-)
+total_games = int(kpi_df["total_games"].sum())
+total_wins = int(kpi_df["total_wins"].sum())
+win_rate = round(total_wins / total_games * 100, 1) if total_games else 0.0
+lichess_cnt = int(kpi_df.loc[kpi_df["source"] == "lichess", "total_games"].sum())
+chesscom_cnt = int(kpi_df.loc[kpi_df["source"] == "chesscom", "total_games"].sum())
 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Total Games", total_games)
@@ -164,11 +152,7 @@ c4.metric("Chess.com Games", chesscom_cnt)
 # ---------------------------------------------------------------------------
 
 st.header("Player Stats")
-ps_where = [f"player IN ({_quoted_env_users})"]
-if platform != "All":
-    ps_where.append(f"source = '{platform}'")
-ps_clause = " WHERE " + " AND ".join(ps_where)
-ps_df = _query(conn, f"SELECT * FROM player_stats{ps_clause}")
+ps_df = _query(conn, f"SELECT * FROM player_stats{_player_where()}")
 if ps_df.empty:
     st.info("No player stats available.")
 else:
@@ -179,11 +163,8 @@ else:
 # ---------------------------------------------------------------------------
 
 st.header("Opening Stats")
-os_where = []
-if platform != "All":
-    os_where.append(f"source = '{platform}'")
-os_clause = (" WHERE " + " AND ".join(os_where)) if os_where else ""
-os_df = _query(conn, f"SELECT * FROM opening_stats{os_clause}")
+src_clause = f" WHERE source = '{platform}'" if platform != "All" else ""
+os_df = _query(conn, f"SELECT * FROM opening_stats{src_clause}")
 if os_df.empty:
     st.info("No opening stats available.")
 else:
@@ -201,23 +182,20 @@ else:
 st.header("Win Rate Over Time")
 
 wrt_sql = f"""
-    SELECT
-        year,
-        month,
-        CAST(year AS VARCHAR) || '-' || LPAD(CAST(month AS VARCHAR), 2, '0') AS period,
-        COUNT(*) AS games,
-        ROUND(SUM(CASE WHEN winner IN ({_quoted_env_users}) THEN 1 ELSE 0 END)::FLOAT
-              / COUNT(*) * 100, 1) AS win_rate
-    FROM stg_games{_where()}
-        AND year IS NOT NULL AND month IS NOT NULL
-    GROUP BY year, month
+    SELECT year, month, period, games, wins
+    FROM monthly_win_rate{_player_where()}
     ORDER BY year, month
 """
 wrt_df = _query(conn, wrt_sql)
 if wrt_df.empty:
     st.info("No time data available.")
 else:
-    st.line_chart(wrt_df.set_index("period")["win_rate"])
+    agg = (
+        wrt_df.groupby(["year", "month", "period"], as_index=False)
+        .agg(games=("games", "sum"), wins=("wins", "sum"))
+    )
+    agg["win_rate"] = (agg["wins"] / agg["games"].replace(0, float("nan")) * 100).round(1)
+    st.line_chart(agg.set_index("period")["win_rate"])
 
 # ---------------------------------------------------------------------------
 # 5. Time Control Breakdown
@@ -226,9 +204,8 @@ else:
 st.header("Time Control Breakdown")
 
 tc_sql = f"""
-    SELECT time_control, COUNT(*) AS games
-    FROM stg_games{_where()}
-        AND time_control IS NOT NULL
+    SELECT time_control, SUM(games) AS games
+    FROM time_control_breakdown{_player_where()}
     GROUP BY time_control
     ORDER BY games DESC
 """
@@ -247,7 +224,7 @@ st.header("Recent Games")
 rg_sql = f"""
     SELECT game_id, date, white_player, black_player, result, eco,
            time_control, source
-    FROM stg_games{_where()}
+    FROM stg_games{_stg_where()}
     ORDER BY game_id DESC
     LIMIT 50
 """

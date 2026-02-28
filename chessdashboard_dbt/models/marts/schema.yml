@@ -16,3 +16,23 @@ models:
         description: ECO opening code
         data_tests:
           - not_null
+
+  - name: monthly_win_rate
+    description: Win rate aggregated per player, source, year, and month
+    columns:
+      - name: player
+        description: Player username
+        data_tests:
+          - not_null
+      - name: period
+        description: Formatted YYYY-MM period string
+
+  - name: time_control_breakdown
+    description: Game counts aggregated per player, source, and time control
+    columns:
+      - name: player
+        description: Player username
+        data_tests:
+          - not_null
+      - name: time_control
+        description: Time control string
