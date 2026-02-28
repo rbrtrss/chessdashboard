@@ -8,7 +8,7 @@ import click
 from dotenv import load_dotenv
 from pathlib import Path
 
-from .database import get_connection, init_db, insert_game, list_games, game_exists
+from .database import DuckDBDatabase, DEFAULT_DB_PATH
 from . import lichess_client, chesscom_client
 
 
@@ -30,7 +30,7 @@ def _resolve_username(username: str | None, platform: str) -> str:
 
 
 def _fetch_platform(
-    conn, platform: str, username: str, max_games: int | None
+    db, platform: str, username: str, max_games: int | None
 ) -> None:
     """Fetch and store games for one platform."""
     click.echo(f"Fetching games for {username} from {platform}...")
@@ -44,12 +44,11 @@ def _fetch_platform(
     skipped = 0
     for game in games_iter:
         url = game.get("url")
-        if url and game_exists(conn, platform, url):
+        if url and db.game_exists(platform, url):
             skipped += 1
             continue
 
-        insert_game(
-            conn,
+        db.insert_game(
             source=platform,
             white=game["white"],
             black=game["black"],
@@ -99,8 +98,7 @@ def main(ctx: click.Context, db: Path | None) -> None:
 @click.pass_context
 def fetch(ctx: click.Context, username: str | None, platform: str | None, max_games: int | None) -> None:
     """Fetch games from chess platforms. Defaults to both platforms using .env usernames."""
-    conn = get_connection(ctx.obj["db_path"])
-    init_db(conn)
+    db = DuckDBDatabase(ctx.obj["db_path"])
 
     if platform:
         targets = [(platform, _resolve_username(username, platform))]
@@ -113,9 +111,9 @@ def fetch(ctx: click.Context, username: str | None, platform: str | None, max_ga
         ]
 
     for plat, user in targets:
-        _fetch_platform(conn, plat, user, max_games)
+        _fetch_platform(db, plat, user, max_games)
 
-    conn.close()
+    db.close()
 
 
 @main.command(name="list")
@@ -128,11 +126,9 @@ def fetch(ctx: click.Context, username: str | None, platform: str | None, max_ga
 @click.pass_context
 def list_cmd(ctx: click.Context, platform: str | None) -> None:
     """List all stored games."""
-    conn = get_connection(ctx.obj["db_path"])
-    init_db(conn)
-
-    games = list_games(conn, platform)
-    conn.close()
+    db = DuckDBDatabase(ctx.obj["db_path"])
+    games = db.list_games(platform)
+    db.close()
 
     if not games:
         click.echo("No games stored. Use 'chessdashboard fetch' to fetch games.")
@@ -155,8 +151,6 @@ def list_cmd(ctx: click.Context, platform: str | None) -> None:
 @click.pass_context
 def dashboard(ctx: click.Context, port: int) -> None:
     """Launch the Streamlit analytics dashboard."""
-    from .database import DEFAULT_DB_PATH
-
     db_path = ctx.obj["db_path"] or DEFAULT_DB_PATH
     dashboard_path = str(Path(__file__).parent / "dashboard.py")
     subprocess.run(

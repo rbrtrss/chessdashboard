@@ -1,5 +1,7 @@
 """Database operations for chessdashboard using DuckDB."""
 
+from abc import ABC, abstractmethod
+
 import duckdb
 from pathlib import Path
 
@@ -8,14 +10,87 @@ from chessdashboard.schema import ALL_DDL
 DEFAULT_DB_PATH = Path.home() / ".chessdashboard" / "games.duckdb"
 
 
-def get_connection(db_path: Path | None = None) -> duckdb.DuckDBPyConnection:
+class AbstractDatabase(ABC):
+    @abstractmethod
+    def insert_game(
+        self,
+        source: str,
+        white: str,
+        black: str,
+        year: int | None,
+        month: int | None,
+        day: int | None,
+        event: str | None,
+        result: str | None,
+        eco: str | None,
+        time_control: str | None,
+        url: str | None,
+        moves: str,
+        opening_name: str | None = None,
+        opening_variation: str | None = None,
+    ) -> int: ...
+
+    @abstractmethod
+    def game_exists(self, source: str, url: str) -> bool: ...
+
+    @abstractmethod
+    def list_games(self, platform: str | None = None) -> list[tuple]: ...
+
+    @abstractmethod
+    def close(self) -> None: ...
+
+
+class DuckDBDatabase(AbstractDatabase):
+    def __init__(self, db_path: Path | None = None, *, conn=None):
+        self.conn = conn if conn is not None else _get_connection(db_path)
+        _init_db(self.conn)
+
+    def insert_game(
+        self,
+        source: str,
+        white: str,
+        black: str,
+        year: int | None,
+        month: int | None,
+        day: int | None,
+        event: str | None,
+        result: str | None,
+        eco: str | None,
+        time_control: str | None,
+        url: str | None,
+        moves: str,
+        opening_name: str | None = None,
+        opening_variation: str | None = None,
+    ) -> int:
+        return _insert_game(
+            self.conn, source, white, black, year, month, day, event,
+            result, eco, time_control, url, moves, opening_name, opening_variation,
+        )
+
+    def game_exists(self, source: str, url: str) -> bool:
+        return _game_exists(self.conn, source, url)
+
+    def list_games(self, platform: str | None = None) -> list[tuple]:
+        return _list_games(self.conn, platform)
+
+    def close(self) -> None:
+        self.conn.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.close()
+
+
+def _get_connection(db_path: Path | None = None) -> duckdb.DuckDBPyConnection:
     """Get a connection to the DuckDB database."""
     path = db_path or DEFAULT_DB_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
     return duckdb.connect(str(path))
 
 
-def init_db(conn: duckdb.DuckDBPyConnection) -> None:
+def _init_db(conn: duckdb.DuckDBPyConnection) -> None:
     """Initialize the database schema and seed dimension tables."""
     for ddl in ALL_DDL:
         conn.execute(ddl)
@@ -168,7 +243,7 @@ def _get_or_create_opening(
         )
 
 
-def insert_game(
+def _insert_game(
     conn: duckdb.DuckDBPyConnection,
     source: str,
     white: str,
@@ -210,7 +285,7 @@ def insert_game(
     return result_row[0]
 
 
-def game_exists(conn: duckdb.DuckDBPyConnection, source: str, url: str) -> bool:
+def _game_exists(conn: duckdb.DuckDBPyConnection, source: str, url: str) -> bool:
     """Check if a game already exists by source platform and URL."""
     row = conn.execute(
         """
@@ -224,7 +299,7 @@ def game_exists(conn: duckdb.DuckDBPyConnection, source: str, url: str) -> bool:
     return row is not None
 
 
-def list_games(conn: duckdb.DuckDBPyConnection, platform: str | None = None) -> list[tuple]:
+def _list_games(conn: duckdb.DuckDBPyConnection, platform: str | None = None) -> list[tuple]:
     """List all games in the database, optionally filtered by platform."""
     query = """
         SELECT

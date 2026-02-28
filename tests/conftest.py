@@ -3,13 +3,13 @@
 import duckdb
 import pytest
 
-from chessdashboard.database import init_db
+from chessdashboard.database import DuckDBDatabase
 
 
 @pytest.fixture
 def db():
     """In-memory DuckDB connection with schema initialized."""
     conn = duckdb.connect(":memory:")
-    init_db(conn)
-    yield conn
-    conn.close()
+    database = DuckDBDatabase(conn=conn)
+    yield database
+    database.close()

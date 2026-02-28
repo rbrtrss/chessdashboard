@@ -5,7 +5,7 @@ from click.testing import CliRunner
 from unittest.mock import patch
 
 from chessdashboard.cli import main
-from chessdashboard.database import init_db, insert_game
+from chessdashboard.database import DuckDBDatabase
 
 
 SAMPLE_GAME = dict(
@@ -53,31 +53,29 @@ FAKE_CHESSCOM_GAME = {
 
 
 def _make_db():
-    conn = duckdb.connect(":memory:")
-    init_db(conn)
-    return conn
+    return DuckDBDatabase(conn=duckdb.connect(":memory:"))
 
 
 def test_list_empty_db():
-    conn = _make_db()
-    with patch("chessdashboard.cli.get_connection", return_value=conn):
+    fake_db = _make_db()
+    with patch("chessdashboard.cli.DuckDBDatabase", return_value=fake_db):
         result = CliRunner().invoke(main, ["list"])
     assert "No games stored" in result.output
 
 
 def test_list_with_games():
-    conn = _make_db()
-    insert_game(conn, **SAMPLE_GAME)
-    with patch("chessdashboard.cli.get_connection", return_value=conn):
+    fake_db = _make_db()
+    fake_db.insert_game(**SAMPLE_GAME)
+    with patch("chessdashboard.cli.DuckDBDatabase", return_value=fake_db):
         result = CliRunner().invoke(main, ["list"])
     assert "magnus" in result.output
     assert "hikaru" in result.output
 
 
 def test_fetch_lichess():
-    conn = _make_db()
+    fake_db = _make_db()
     with (
-        patch("chessdashboard.cli.get_connection", return_value=conn),
+        patch("chessdashboard.cli.DuckDBDatabase", return_value=fake_db),
         patch("chessdashboard.cli.lichess_client.fetch_games", return_value=iter([FAKE_LICHESS_GAME])),
     ):
         result = CliRunner().invoke(main, ["fetch", "--platform", "lichess", "-u", "testuser"])
@@ -85,12 +83,12 @@ def test_fetch_lichess():
 
 
 def test_fetch_skips_duplicates():
-    conn = _make_db()
-    insert_game(conn, **SAMPLE_GAME)
+    fake_db = _make_db()
+    fake_db.insert_game(**SAMPLE_GAME)
     dup_game = {**SAMPLE_GAME}
     del dup_game["source"]
     with (
-        patch("chessdashboard.cli.get_connection", return_value=conn),
+        patch("chessdashboard.cli.DuckDBDatabase", return_value=fake_db),
         patch("chessdashboard.cli.lichess_client.fetch_games", return_value=iter([dup_game])),
     ):
         result = CliRunner().invoke(main, ["fetch", "--platform", "lichess", "-u", "magnus"])
@@ -99,9 +97,9 @@ def test_fetch_skips_duplicates():
 
 
 def test_fetch_chesscom():
-    conn = _make_db()
+    fake_db = _make_db()
     with (
-        patch("chessdashboard.cli.get_connection", return_value=conn),
+        patch("chessdashboard.cli.DuckDBDatabase", return_value=fake_db),
         patch("chessdashboard.cli.chesscom_client.fetch_games", return_value=iter([FAKE_CHESSCOM_GAME])),
     ):
         result = CliRunner().invoke(main, ["fetch", "--platform", "chesscom", "-u", "testuser"])
@@ -110,10 +108,10 @@ def test_fetch_chesscom():
 
 def test_fetch_both_platforms_from_env():
     """No args + env vars set → fetches both platforms."""
-    conn = _make_db()
+    fake_db = _make_db()
     env = {"LICHESS_USERNAME": "envuser", "CHESSCOM_USERNAME": "envuser"}
     with (
-        patch("chessdashboard.cli.get_connection", return_value=conn),
+        patch("chessdashboard.cli.DuckDBDatabase", return_value=fake_db),
         patch("chessdashboard.cli.lichess_client.fetch_games", return_value=iter([FAKE_LICHESS_GAME])) as mock_lic,
         patch("chessdashboard.cli.chesscom_client.fetch_games", return_value=iter([FAKE_CHESSCOM_GAME])) as mock_cc,
         patch.dict("os.environ", env, clear=False),
@@ -126,10 +124,10 @@ def test_fetch_both_platforms_from_env():
 
 def test_fetch_single_platform_from_env():
     """--platform lichess + env var → fetches lichess only using env username."""
-    conn = _make_db()
+    fake_db = _make_db()
     env = {"LICHESS_USERNAME": "envuser"}
     with (
-        patch("chessdashboard.cli.get_connection", return_value=conn),
+        patch("chessdashboard.cli.DuckDBDatabase", return_value=fake_db),
         patch("chessdashboard.cli.lichess_client.fetch_games", return_value=iter([FAKE_LICHESS_GAME])) as mock_lic,
         patch.dict("os.environ", env, clear=False),
     ):
@@ -140,8 +138,8 @@ def test_fetch_single_platform_from_env():
 
 def test_fetch_username_without_platform_errors():
     """-u without --platform → error."""
-    conn = _make_db()
-    with patch("chessdashboard.cli.get_connection", return_value=conn):
+    fake_db = _make_db()
+    with patch("chessdashboard.cli.DuckDBDatabase", return_value=fake_db):
         result = CliRunner().invoke(main, ["fetch", "-u", "someone"])
     assert result.exit_code != 0
     assert "--username requires --platform" in result.output
@@ -149,10 +147,10 @@ def test_fetch_username_without_platform_errors():
 
 def test_fetch_missing_env_var_errors():
     """No args + missing env var → error."""
-    conn = _make_db()
+    fake_db = _make_db()
     env = {"LICHESS_USERNAME": "", "CHESSCOM_USERNAME": ""}
     with (
-        patch("chessdashboard.cli.get_connection", return_value=conn),
+        patch("chessdashboard.cli.DuckDBDatabase", return_value=fake_db),
         patch.dict("os.environ", env, clear=False),
     ):
         result = CliRunner().invoke(main, ["fetch"])
