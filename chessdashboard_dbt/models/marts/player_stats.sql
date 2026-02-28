@@ -1,3 +1,5 @@
+{{ config(materialized='table') }}
+
 -- player_stats: Aggregated win/loss/draw statistics per player and source.
 
 with white_games as (

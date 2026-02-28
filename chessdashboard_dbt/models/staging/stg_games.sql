@@ -1,3 +1,5 @@
+{{ config(materialized='incremental', unique_key='game_id') }}
+
 -- stg_games: Denormalized view of the star schema.
 -- Joins fact_games with all dimension tables so downstream
 -- models can just SELECT from this single clean table.
@@ -50,3 +52,7 @@ left join {{ source('chessdashboard', 'dim_player') }} pb on g.playing_black_id 
 left join {{ source('chessdashboard', 'dim_result') }} r on g.result_id = r.result_id
 left join {{ source('chessdashboard', 'dim_source') }} s on g.source_id = s.source_id
 left join {{ source('chessdashboard', 'dim_opening') }} o on g.eco = o.eco
+
+{% if is_incremental() %}
+  where g.game_id > (select max(game_id) from {{ this }})
+{% endif %}

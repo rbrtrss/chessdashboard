@@ -1,3 +1,5 @@
+{{ config(materialized='table') }}
+
 -- opening_stats: Performance statistics grouped by ECO opening code and source.
 
 select
