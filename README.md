@@ -2,6 +2,94 @@
 
 CLI tool to fetch chess games from Lichess and Chess.com, store in DuckDB, and analyze with dbt.
 
+## Architecture
+
+### Pipeline
+
+```mermaid
+flowchart TD
+    LI[Lichess API\nNDJSON stream]
+    CC[Chess.com API\nPGN archives]
+    LC[lichess_client.py]
+    CCC[chesscom_client.py]
+    DB[(DuckDB\ngames.duckdb)]
+    STG[stg_games\nincremental]
+    PS[player_stats\ntable]
+    OS[opening_stats\ntable]
+    DASH[Streamlit\nDashboard]
+
+    LI --> LC
+    CC --> CCC
+    LC --> DB
+    CCC --> DB
+    DB --> STG
+    STG --> PS
+    STG --> OS
+    PS --> DASH
+    OS --> DASH
+    STG --> DASH
+```
+
+### Database schema
+
+```mermaid
+erDiagram
+    fact_games {
+        int game_id PK
+        int date_id FK
+        int event_id FK
+        int source_id FK
+        int playing_white_id FK
+        int playing_black_id FK
+        int result_id FK
+        text eco
+        text time_control
+        text url
+        text moves
+    }
+    dim_player {
+        int player_id PK
+        text username
+        text display_name
+    }
+    dim_date {
+        int date_id PK
+        text date
+        int year
+        int month
+        int day
+    }
+    dim_event {
+        int event_id PK
+        text name
+        text site
+        text round
+    }
+    dim_result {
+        int result_id PK
+        text result
+    }
+    dim_source {
+        int source_id PK
+        text source
+    }
+    dim_opening {
+        text eco PK
+        text name
+        text variation
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    fact_games }o--|| dim_player : "plays white"
+    fact_games }o--|| dim_player : "plays black"
+    fact_games }o--|| dim_date : "played on"
+    fact_games }o--|| dim_event : "part of"
+    fact_games }o--|| dim_result : "ended with"
+    fact_games }o--|| dim_source : "from"
+    fact_games }o--o| dim_opening : "opened with"
+```
+
 ## Install
 
 ```bash
