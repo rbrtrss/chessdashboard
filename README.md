@@ -253,7 +253,7 @@ Add these repository secrets for the CI/CD workflows:
 
 ### 1. Setup & Configuration
 
-- 1.1 Copy `.env.example` → `.env` and fill in credentials (`MOTHERDUCK_TOKEN`, `LICHESS_USERNAME`, `CHESSCOM_USERNAME`)
+- ~~1.1 Copy `.env.example` → `.env` and fill in credentials (`MOTHERDUCK_TOKEN`, `LICHESS_USERNAME`, `CHESSCOM_USERNAME`)~~ ✓ done
 - 1.2 Create MotherDuck database and schemas (`chessdashboard.raw`, `chessdashboard.analytics`)
 
 ### 2. Ingestion Layer (`ingestion/`)
