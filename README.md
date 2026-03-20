@@ -8,7 +8,7 @@ Cloud-native analytics pipeline for chess games from Lichess and Chess.com. Fetc
 flowchart TD
     LI[Lichess API] --> ING
     CC[Chess.com API] --> ING
-    ING["ingestion/<br/>Python CLI"] -->|raw schema| MD[(MotherDuck)]
+    ING["ingestion/<br/>dlt pipeline"] -->|raw schema| MD[(MotherDuck)]
     MD -->|source ref| DBT["transform/<br/>dbt-duckdb"]
     DBT -->|analytics schema| MD
     MD --> DASH["dashboard/<br/>Streamlit"]
