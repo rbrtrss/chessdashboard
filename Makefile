@@ -1,4 +1,4 @@
-.PHONY: setup ingest transform dash
+.PHONY: setup ingest transform dash test
 
 setup:
 	uv run python -c "\
@@ -19,3 +19,6 @@ transform:
 
 dash:
 	uv run streamlit run dashboard/app.py
+
+test:
+	uv run pytest tests/ -v
