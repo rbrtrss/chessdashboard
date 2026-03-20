@@ -285,7 +285,7 @@ Add these repository secrets for the CI/CD workflows:
 
 ### 6. CI/CD (`.github/workflows/`)
 
-- 6.1 `daily_pipeline.yml` — cron at 06:00 UTC: ingest → `dbt build`
+- ~~6.1 `daily_pipeline.yml` — cron at 06:00 UTC: ingest → `dbt build`~~ ✓ done
 - 6.2 `ci.yml` — on PR: `ruff` lint → `pytest` → `dbt build --target ci`
 
 ### 7. Project Files
