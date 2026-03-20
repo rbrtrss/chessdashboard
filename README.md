@@ -98,6 +98,7 @@ Edit `.env` with your credentials:
 MOTHERDUCK_TOKEN=your_motherduck_token
 LICHESS_USERNAME=your_lichess_username
 CHESSCOM_USERNAME=your_chesscom_username
+DESTINATION=motherduck
 ```
 
 3. **Create the MotherDuck database**
