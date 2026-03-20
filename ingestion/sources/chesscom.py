@@ -1,13 +1,29 @@
+from typing import Iterator
+
 import dlt
-from dlt.sources.chess import source as chess_source
+import requests
 
 
-def chesscom_games(username: str, max_games: int | None = None):
-    """Return dlt Chess.com source configured for the given username."""
-    source = chess_source(players=[username])
-    if max_games is not None:
-        # Limit is applied post-load in the normalizer transformer
-        source = source.with_resources("players_games")
-    else:
-        source = source.with_resources("players_games")
-    return source
+@dlt.resource(
+    name="games",
+    primary_key="uuid",
+    write_disposition="merge",
+)
+def chesscom_games(username: str, max_games: int | None = None) -> Iterator[dict]:
+    """Stream games from the Chess.com API, newest months first."""
+    archives_url = f"https://api.chess.com/pub/player/{username}/games/archives"
+    resp = requests.get(archives_url, timeout=30)
+    resp.raise_for_status()
+    archives = resp.json().get("archives", [])
+
+    count = 0
+    for archive_url in reversed(archives):  # newest first
+        if max_games is not None and count >= max_games:
+            break
+        r = requests.get(archive_url, timeout=30)
+        r.raise_for_status()
+        for game in r.json().get("games", []):
+            if max_games is not None and count >= max_games:
+                break
+            yield game
+            count += 1
