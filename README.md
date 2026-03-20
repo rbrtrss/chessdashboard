@@ -31,15 +31,13 @@ Orchestration runs on GitHub Actions: a daily cron triggers ingestion followed b
 ```
 chessdashboard/
 ├── ingestion/
-│   ├── clients/
-│   │   ├── lichess.py            # NDJSON stream fetcher
-│   │   └── chesscom.py           # PGN archive fetcher
-│   ├── parsers/
-│   │   └── pgn_parser.py         # Normalize both sources → common schema
-│   ├── loaders/
-│   │   └── motherduck.py         # duckdb.connect("md:") INSERT logic
-│   ├── main.py                   # CLI entry point
-│   └── config.py                 # Env vars, MotherDuck token
+│   ├── sources/
+│   │   ├── lichess.py            # Custom dlt resource — NDJSON stream
+│   │   └── chesscom.py           # Wraps dlt verified Chess.com source
+│   ├── normalizers/
+│   │   └── common.py             # Maps both sources → common schema
+│   ├── pipeline.py               # dlt pipeline entry point (CLI)
+│   └── config.py                 # Env vars (MOTHERDUCK_TOKEN, usernames)
 │
 ├── transform/                    # dbt project root
 │   ├── dbt_project.yml
@@ -135,16 +133,16 @@ make dash
 
 ```bash
 # Fetch from both platforms (uses .env usernames)
-uv run python -m ingestion.main
+uv run python -m ingestion.pipeline
 
 # Fetch from one platform only
-uv run python -m ingestion.main --platform lichess
+uv run python -m ingestion.pipeline --platform lichess
 
 # Limit number of games fetched
-uv run python -m ingestion.main --platform chesscom --max 100
+uv run python -m ingestion.pipeline --platform chesscom --max 100
 ```
 
-The ingestion layer is **idempotent**: games are deduplicated on `game_id` so re-running is always safe. It tracks `last_fetched_at` to only pull new games on each run.
+The ingestion layer is **idempotent**: games are deduplicated on `game_id` via `write_disposition="merge"` — re-running is always safe. dlt stores incremental state at the destination so only new games are pulled on each run.
 
 ### dbt
 
@@ -255,56 +253,56 @@ Add these repository secrets for the CI/CD workflows:
 
 ### 1. Setup & Configuration
 
-1.1. Copy `.env.example` → `.env` and fill in credentials (`MOTHERDUCK_TOKEN`, `LICHESS_USERNAME`, `CHESSCOM_USERNAME`)
-1.2. Create MotherDuck database and schemas (`chessdashboard.raw`, `chessdashboard.analytics`)
+- 1.1 Copy `.env.example` → `.env` and fill in credentials (`MOTHERDUCK_TOKEN`, `LICHESS_USERNAME`, `CHESSCOM_USERNAME`)
+- 1.2 Create MotherDuck database and schemas (`chessdashboard.raw`, `chessdashboard.analytics`)
 
 ### 2. Ingestion Layer (`ingestion/`)
 
-2.1. `config.py` — env var loading
-2.2. `clients/lichess.py` — NDJSON stream fetcher
-2.3. `clients/chesscom.py` — PGN archive fetcher
-2.4. `parsers/pgn_parser.py` — normalize both sources to common schema
-2.5. `loaders/motherduck.py` — `duckdb.connect("md:")` INSERT logic with dedup on `game_id`
-2.6. `main.py` — CLI entry point with `--platform` and `--max` flags
+- ~~2.1 `config.py` — env var loading~~ ✓ done
+- ~~2.2 `sources/lichess.py` — custom dlt resource (NDJSON stream)~~ ✓ done
+- ~~2.3 `sources/chesscom.py` — wraps dlt verified Chess.com source~~ ✓ done
+- ~~2.4 `normalizers/common.py` — normalize both sources to common schema~~ ✓ done
+- ~~2.5 loaders — replaced by dlt `write_disposition="merge"` + destination config~~ ✓ done
+- ~~2.6 `pipeline.py` — CLI entry point with `--platform` and `--max` flags~~ ✓ done
 
 ### 3. Transform Layer (`transform/`)
 
-3.1. `dbt_project.yml` — dbt project config
-3.2. `profiles.yml` — MotherDuck connection via env var
-3.3. `models/staging/_stg_sources.yml` — source definition pointing to `raw` schema
-3.4. `models/staging/stg_games.sql` — dedup, cast, normalize
-3.5. `models/marts/player_stats.sql` — win/loss/draw counts + win rate per player/source/color
-3.6. `models/marts/opening_stats.sql` — performance by ECO code
-3.7. `models/marts/monthly_win_rate.sql` — win rate trend by month
+- 3.1 `dbt_project.yml` — dbt project config
+- 3.2 `profiles.yml` — MotherDuck connection via env var
+- 3.3 `models/staging/_stg_sources.yml` — source definition pointing to `raw` schema
+- 3.4 `models/staging/stg_games.sql` — dedup, cast, normalize
+- 3.5 `models/marts/player_stats.sql` — win/loss/draw counts + win rate per player/source/color
+- 3.6 `models/marts/opening_stats.sql` — performance by ECO code
+- 3.7 `models/marts/monthly_win_rate.sql` — win rate trend by month
 
 ### 4. Dashboard Layer (`dashboard/`)
 
-4.1. `app.py` — Streamlit entry point
-4.2. `components/` — chart helpers and filters
-4.3. `.streamlit/secrets.toml` — MotherDuck token (gitignored)
+- 4.1 `app.py` — Streamlit entry point
+- 4.2 `components/` — chart helpers and filters
+- 4.3 `.streamlit/secrets.toml` — MotherDuck token (gitignored)
 
 ### 5. Tests (`tests/`)
 
-5.1. Unit tests for ingestion clients (Lichess, Chess.com)
-5.2. Unit tests for PGN parser
-5.3. Unit tests for MotherDuck loader
-5.4. dbt tests in `transform/tests/`
+- 5.1 Unit tests for ingestion clients (Lichess, Chess.com)
+- 5.2 Unit tests for PGN parser
+- 5.3 Unit tests for MotherDuck loader
+- 5.4 dbt tests in `transform/tests/`
 
 ### 6. CI/CD (`.github/workflows/`)
 
-6.1. `daily_pipeline.yml` — cron at 06:00 UTC: ingest → `dbt build`
-6.2. `ci.yml` — on PR: `ruff` lint → `pytest` → `dbt build --target ci`
+- 6.1 `daily_pipeline.yml` — cron at 06:00 UTC: ingest → `dbt build`
+- 6.2 `ci.yml` — on PR: `ruff` lint → `pytest` → `dbt build --target ci`
 
 ### 7. Project Files
 
-7.1. `pyproject.toml` — all Python dependencies via `uv`
-7.2. `Makefile` — `make ingest`, `make transform`, `make dash`
-7.3. `.env.example` — template with required env vars
+- 7.1 `pyproject.toml` — all Python dependencies via `uv`
+- 7.2 `Makefile` — `make ingest`, `make transform`, `make dash`
+- 7.3 `.env.example` — template with required env vars
 
 ### 8. Deployment
 
-8.1. Add GitHub Actions secrets (`MOTHERDUCK_TOKEN`, `LICHESS_USERNAME`, `CHESSCOM_USERNAME`)
-8.2. Deploy dashboard to Streamlit Community Cloud
+- 8.1 Add GitHub Actions secrets (`MOTHERDUCK_TOKEN`, `LICHESS_USERNAME`, `CHESSCOM_USERNAME`)
+- 8.2 Deploy dashboard to Streamlit Community Cloud
 
 ## License
 

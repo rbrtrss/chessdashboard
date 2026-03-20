@@ -8,3 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Environment secrets
+.env
+
+# DuckDB local files
+*.duckdb
+*.duckdb.wal
+
+# dlt pipeline state
+.dlt/
