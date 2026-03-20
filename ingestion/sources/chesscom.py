@@ -4,14 +4,14 @@ import dlt
 import requests
 
 
+_HEADERS = {"User-Agent": "chessdashboard/0.1 (github.com/rbrtrss/chessdashboard)"}
+
+
 @dlt.resource(
     name="games",
     primary_key="uuid",
     write_disposition="merge",
 )
-_HEADERS = {"User-Agent": "chessdashboard/0.1 (github.com/rbrtrss/chessdashboard)"}
-
-
 def chesscom_games(username: str, max_games: int | None = None) -> Iterator[dict]:
     """Stream games from the Chess.com API, newest months first."""
     archives_url = f"https://api.chess.com/pub/player/{username}/games/archives"
