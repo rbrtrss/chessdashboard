@@ -50,16 +50,18 @@ def normalized_chesscom(username: str, max_games: int | None = None) -> Iterator
 
 
 def build_pipeline() -> dlt.Pipeline:
-    destination_name = DESTINATION
-
-    if destination_name == "motherduck":
+    if DESTINATION == "motherduck":
         if not MOTHERDUCK_TOKEN:
             raise ValueError("MOTHERDUCK_TOKEN must be set when DESTINATION=motherduck")
-        os.environ.setdefault("destination__motherduck__credentials", f"md:?motherduck_token={MOTHERDUCK_TOKEN}")
+        destination = dlt.destinations.motherduck(
+            f"md:chessdashboard?motherduck_token={MOTHERDUCK_TOKEN}"
+        )
+    else:
+        destination = DESTINATION  # type: ignore[assignment]
 
     return dlt.pipeline(
         pipeline_name="chessdashboard",
-        destination=destination_name,
+        destination=destination,
         dataset_name="raw",
     )
 
