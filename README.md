@@ -103,13 +103,7 @@ CHESSCOM_USERNAME=your_chesscom_username
 3. **Create the MotherDuck database**
 
 ```bash
-uv run python -c "
-import duckdb
-conn = duckdb.connect('md:')
-conn.execute('CREATE DATABASE IF NOT EXISTS chessdashboard')
-conn.execute('CREATE SCHEMA IF NOT EXISTS chessdashboard.raw')
-conn.execute('CREATE SCHEMA IF NOT EXISTS chessdashboard.analytics')
-"
+make setup
 ```
 
 ## Usage
@@ -254,7 +248,7 @@ Add these repository secrets for the CI/CD workflows:
 ### 1. Setup & Configuration
 
 - ~~1.1 Copy `.env.example` → `.env` and fill in credentials (`MOTHERDUCK_TOKEN`, `LICHESS_USERNAME`, `CHESSCOM_USERNAME`)~~ ✓ done
-- 1.2 Create MotherDuck database and schemas (`chessdashboard.raw`, `chessdashboard.analytics`)
+- ~~1.2 Create MotherDuck database and schemas (`chessdashboard.raw`, `chessdashboard.analytics`)~~ ✓ done
 
 ### 2. Ingestion Layer (`ingestion/`)
 
