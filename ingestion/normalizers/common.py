@@ -41,7 +41,7 @@ def normalize_lichess(game: dict) -> dict:
         "black_rating": black.get("rating"),
         "result": _parse_result(game.get("winner", "draw") if "winner" in game else game.get("status", "draw")),
         "eco": opening.get("eco", ""),
-        "time_control": game.get("clock", {}).get("initial", "") if game.get("clock") else game.get("speed", ""),
+        "time_control": str(game["clock"]["initial"]) if game.get("clock") else game.get("speed", ""),
         "moves": game.get("moves", ""),
     }
 
