@@ -1,0 +1,256 @@
+# chessdashboard
+
+Cloud-native analytics pipeline for chess games from Lichess and Chess.com. Fetches games via public APIs, loads raw data into [MotherDuck](https://motherduck.com/) (cloud DuckDB), transforms with [dbt](https://www.getdbt.com/), and visualizes in a [Streamlit](https://streamlit.io/) dashboard.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    LI[Lichess API] --> ING
+    CC[Chess.com API] --> ING
+    ING["ingestion/<br/>Python CLI"] -->|raw schema| MD[(MotherDuck)]
+    MD -->|source ref| DBT["transform/<br/>dbt-duckdb"]
+    DBT -->|analytics schema| MD
+    MD --> DASH["dashboard/<br/>Streamlit"]
+    GHA["GitHub Actions<br/>cron · CI"] -.->|1. run ingestion| ING
+    GHA -.->|2. dbt build + test| DBT
+```
+
+The pipeline has three decoupled layers that communicate through MotherDuck schemas:
+
+| Layer | Directory | Responsibility |
+|---|---|---|
+| **Extract & Load** | `ingestion/` | Fetch games from Lichess (NDJSON) and Chess.com (PGN archives), parse into a common schema, load into MotherDuck `raw.games` |
+| **Transform** | `transform/` | dbt project: staging model deduplicates and normalizes, mart models compute player stats, opening stats, and monthly win rates |
+| **Visualize** | `dashboard/` | Streamlit app reading directly from MotherDuck `analytics` schema |
+
+Orchestration runs on GitHub Actions: a daily cron triggers ingestion followed by `dbt build`, and a CI workflow runs lint + tests on every PR.
+
+## Repository structure
+
+```
+chessdashboard/
+├── ingestion/
+│   ├── clients/
+│   │   ├── lichess.py            # NDJSON stream fetcher
+│   │   └── chesscom.py           # PGN archive fetcher
+│   ├── parsers/
+│   │   └── pgn_parser.py         # Normalize both sources → common schema
+│   ├── loaders/
+│   │   └── motherduck.py         # duckdb.connect("md:") INSERT logic
+│   ├── main.py                   # CLI entry point
+│   └── config.py                 # Env vars, MotherDuck token
+│
+├── transform/                    # dbt project root
+│   ├── dbt_project.yml
+│   ├── profiles.yml              # MotherDuck connection via env var
+│   ├── models/
+│   │   ├── staging/
+│   │   │   ├── _stg_sources.yml  # Source definition → raw schema
+│   │   │   └── stg_games.sql     # Dedup, cast, normalize
+│   │   └── marts/
+│   │       ├── player_stats.sql
+│   │       ├── opening_stats.sql
+│   │       └── monthly_win_rate.sql
+│   ├── tests/
+│   └── macros/
+│
+├── dashboard/
+│   ├── app.py                    # Streamlit entry point
+│   ├── components/               # Chart helpers, filters
+│   └── .streamlit/
+│       └── secrets.toml          # MotherDuck token (gitignored)
+│
+├── .github/workflows/
+│   ├── daily_pipeline.yml        # Cron → ingest → dbt build → dbt test
+│   └── ci.yml                    # On PR: lint, pytest, dbt build --target ci
+│
+├── tests/                        # pytest for ingestion + loaders
+├── pyproject.toml                # uv — all Python dependencies
+├── Makefile
+├── .env.example
+└── README.md
+```
+
+## Prerequisites
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) for dependency management
+- A [MotherDuck](https://motherduck.com/) account (free tier works)
+
+## Setup
+
+1. **Clone and install dependencies**
+
+```bash
+git clone https://github.com/rbrtrss/chessdashboard.git
+cd chessdashboard
+uv sync
+```
+
+2. **Configure environment variables**
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your credentials:
+
+```
+MOTHERDUCK_TOKEN=your_motherduck_token
+LICHESS_USERNAME=your_lichess_username
+CHESSCOM_USERNAME=your_chesscom_username
+```
+
+3. **Create the MotherDuck database**
+
+```bash
+uv run python -c "
+import duckdb
+conn = duckdb.connect('md:')
+conn.execute('CREATE DATABASE IF NOT EXISTS chessdashboard')
+conn.execute('CREATE SCHEMA IF NOT EXISTS chessdashboard.raw')
+conn.execute('CREATE SCHEMA IF NOT EXISTS chessdashboard.analytics')
+"
+```
+
+## Usage
+
+### Local development
+
+A `Makefile` wraps common commands so local and CI stay in sync:
+
+```bash
+# Fetch games from both platforms and load into MotherDuck
+make ingest
+
+# Run dbt: staging → marts → tests
+make transform
+
+# Launch Streamlit dashboard
+make dash
+```
+
+### Ingestion CLI
+
+```bash
+# Fetch from both platforms (uses .env usernames)
+uv run python -m ingestion.main
+
+# Fetch from one platform only
+uv run python -m ingestion.main --platform lichess
+
+# Limit number of games fetched
+uv run python -m ingestion.main --platform chesscom --max 100
+```
+
+The ingestion layer is **idempotent**: games are deduplicated on `game_id` so re-running is always safe. It tracks `last_fetched_at` to only pull new games on each run.
+
+### dbt
+
+```bash
+cd transform
+
+# Run all models
+uv run dbt run
+
+# Run tests
+uv run dbt test
+
+# Build (run + test) and generate docs
+uv run dbt build
+uv run dbt docs generate && uv run dbt docs serve
+```
+
+### Dashboard
+
+```bash
+uv run streamlit run dashboard/app.py
+```
+
+The dashboard connects to MotherDuck using the token from `.streamlit/secrets.toml` (local) or Streamlit Community Cloud secrets (production).
+
+## Data model
+
+### Staging
+
+**`stg_games`** — One row per game, deduplicated across sources, with normalized columns:
+
+| Column | Type | Description |
+|---|---|---|
+| `game_id` | `VARCHAR` | Unique identifier (source-prefixed) |
+| `source` | `VARCHAR` | `lichess` or `chesscom` |
+| `played_at` | `TIMESTAMP` | Game start time (UTC) |
+| `white_username` | `VARCHAR` | White player |
+| `black_username` | `VARCHAR` | Black player |
+| `white_rating` | `INTEGER` | White Elo at game time |
+| `black_rating` | `INTEGER` | Black Elo at game time |
+| `result` | `VARCHAR` | `white`, `black`, or `draw` |
+| `eco` | `VARCHAR` | ECO opening code |
+| `time_control` | `VARCHAR` | Time control string |
+| `moves` | `VARCHAR` | Move list |
+
+### Marts
+
+- **`player_stats`** — Win/loss/draw counts and win rate per player, source, and color
+- **`opening_stats`** — Performance by ECO code: games played, win rate, avg rating
+- **`monthly_win_rate`** — Win rate trend by month for time-series charts
+
+## CI/CD
+
+### Daily pipeline (`.github/workflows/daily_pipeline.yml`)
+
+Runs on cron at 06:00 UTC:
+
+1. Install dependencies with `uv sync`
+2. Run ingestion (`make ingest`)
+3. Run `dbt build` (models + tests)
+4. Fail the workflow if any dbt test fails
+
+### CI (`.github/workflows/ci.yml`)
+
+Runs on every pull request:
+
+1. Lint with `ruff`
+2. Run `pytest` for ingestion unit tests
+3. Run `dbt build --target ci` against a separate CI schema in MotherDuck
+
+## Deployment
+
+### Dashboard on Streamlit Community Cloud
+
+1. Push the repo to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io) → **New app**
+3. Set the main file path to `dashboard/app.py`
+4. Under **Advanced settings → Secrets**, add:
+
+```toml
+MOTHERDUCK_TOKEN = "your_motherduck_token"
+LICHESS_USERNAME = "your_lichess_username"
+CHESSCOM_USERNAME = "your_chesscom_username"
+```
+
+### GitHub Actions secrets
+
+Add these repository secrets for the CI/CD workflows:
+
+| Secret | Description |
+|---|---|
+| `MOTHERDUCK_TOKEN` | MotherDuck API token |
+| `LICHESS_USERNAME` | Lichess username for ingestion |
+| `CHESSCOM_USERNAME` | Chess.com username for ingestion |
+
+## Stack
+
+| Component | Tool | Why |
+|---|---|---|
+| Warehouse | MotherDuck | Serverless cloud DuckDB — zero infra, SQL-native, generous free tier |
+| Transform | dbt-duckdb | Industry-standard transform layer with testing, docs, and lineage |
+| Dashboard | Streamlit | Python-native, fast to build, free cloud hosting |
+| Orchestration | GitHub Actions | Already in the repo, no extra service to manage |
+| Dependencies | uv | Fast, reproducible Python dependency management |
+| CI | ruff + pytest + dbt test | Lint, unit tests, and data quality in one pipeline |
+
+## License
+
+MIT

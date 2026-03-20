@@ -1,0 +1,1 @@
+ALL commits must use the generate-commit-message skill
