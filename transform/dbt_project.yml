@@ -1,0 +1,27 @@
+name: chessdashboard
+version: '0.1.0'
+config-version: 2
+
+profile: chessdashboard
+
+vars:
+  lichess_username: "{{ env_var('LICHESS_USERNAME', '') }}"
+  chesscom_username: "{{ env_var('CHESSCOM_USERNAME', '') }}"
+
+models:
+  chessdashboard:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: analytics
+
+seeds:
+  chessdashboard:
+    +schema: seeds
+
+clean-targets:
+  - target
+  - dbt_packages
+  - logs

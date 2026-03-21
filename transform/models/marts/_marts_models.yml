@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: fct_games
+    description: >
+      Central fact table joining staged games with ECO opening codes.
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+          - unique
+      - name: opening_name
+        tests:
+          - not_null
+      - name: my_color
+        tests:
+          - not_null
+      - name: my_result
+        tests:
+          - not_null
+      - name: time_category
+        tests:
+          - not_null
+
+  - name: player_stats
+    description: >
+      Aggregated player statistics by source, color, and time category.
+    columns:
+      - name: games_played
+        tests:
+          - not_null
+
+  - name: opening_stats
+    description: >
+      Aggregated opening statistics by ECO code and time category.
+    columns:
+      - name: games_played
+        tests:
+          - not_null
+
+  - name: monthly_win_rate
+    description: >
+      Monthly win rate breakdown by source, time category, and color.
+    columns:
+      - name: games_played
+        tests:
+          - not_null

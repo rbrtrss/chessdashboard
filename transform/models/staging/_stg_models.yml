@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: stg_games
+    description: >
+      Staged chess games with time control parsing, player perspective
+      (my_color, my_result, my_rating), and time category classification.
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+          - unique
+      - name: my_color
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['white', 'black']
+      - name: my_result
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['win', 'loss', 'draw']
+      - name: time_category
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['bullet', 'blitz', 'rapid', 'classical']

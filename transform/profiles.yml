@@ -1,0 +1,11 @@
+chessdashboard:
+  target: prod
+  outputs:
+    prod:
+      type: duckdb
+      path: "md:chessdashboard?motherduck_token={{ env_var('MOTHERDUCK_TOKEN') }}"
+      schema: raw
+    ci:
+      type: duckdb
+      path: chessdashboard_ci.duckdb
+      schema: raw

@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: games
+        columns:
+          - name: game_id
+            tests:
+              - not_null
+              - unique
+          - name: source
+            tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ['lichess', 'chesscom']
+          - name: played_at
+            tests:
+              - not_null
+          - name: result
+            tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ['white', 'black', 'draw']
