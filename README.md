@@ -179,20 +179,25 @@ The dashboard connects to MotherDuck using the token from `.streamlit/secrets.to
 | `game_id` | `VARCHAR` | Unique identifier (source-prefixed) |
 | `source` | `VARCHAR` | `lichess` or `chesscom` |
 | `played_at` | `TIMESTAMP` | Game start time (UTC) |
+| `white_username` | `VARCHAR` | White player's username |
+| `black_username` | `VARCHAR` | Black player's username |
+| `white_rating` | `INTEGER` | White player's Elo at game time |
+| `black_rating` | `INTEGER` | Black player's Elo at game time |
+| `result` | `VARCHAR` | Raw game result |
+| `eco` | `VARCHAR` | ECO opening code |
+| `time_control` | `VARCHAR` | Raw time control string |
+| `moves` | `VARCHAR` | Move list |
 | `my_color` | `VARCHAR` | `white` or `black` (which side I played) |
+| `time_category` | `VARCHAR` | `bullet`, `blitz`, `rapid`, or `classical` |
 | `my_result` | `VARCHAR` | `win`, `loss`, or `draw` |
 | `my_rating` | `INTEGER` | My Elo at game time |
 | `opponent_rating` | `INTEGER` | Opponent Elo at game time |
-| `eco` | `VARCHAR` | ECO opening code |
-| `time_control` | `VARCHAR` | Raw time control string |
-| `time_category` | `VARCHAR` | `bullet`, `blitz`, `rapid`, or `classical` |
-| `moves` | `VARCHAR` | Move list |
 
 ### Marts
 
-- **`fct_games`** — Central fact table joining `stg_games` with `eco_codes` seed for opening names and variants
-- **`player_stats`** — Win/loss/draw counts and win rate by source, color, and time category
-- **`opening_stats`** — Performance by ECO code and time category: games played, win rate, avg ratings
+- **`fct_games`** — Central fact table joining `stg_games` with `eco_codes` seed for opening names, variants, and opponent strength classification
+- **`player_stats`** — Win/loss/draw counts, win rate, and date range by source, color, and time category
+- **`opening_stats`** — Performance by ECO code, opening name/variant, and time category: games played, wins, losses, draws, and win rate
 - **`monthly_win_rate`** — Win rate trend by month, source, time category, and color
 
 ## CI/CD
