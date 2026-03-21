@@ -197,3 +197,18 @@ unit_tests:
     expect:
       rows:
         - {game_id: "g1", my_rating: 1600, opponent_rating: 1500}
+
+  - name: test_chesscom_daily_fraction
+    description: "Chess.com daily fraction format (1/259200) should classify as classical"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "chesscom", played_at: "2024-01-01", white_username: "testplayer", black_username: "opponent", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "1/259200", moves: "e4 e5"}
+    expect:
+      rows:
+        - {game_id: "g1", time_category: "classical"}

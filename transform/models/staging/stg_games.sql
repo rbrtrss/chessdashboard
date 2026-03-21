@@ -35,6 +35,9 @@ parsed as (
             when lower(time_control) = 'rapid' then 600
             when lower(time_control) = 'classical' then 1800
             when lower(time_control) = 'ultrabullet' then 30
+            -- Chess.com daily/correspondence: fraction format (e.g. "1/259200")
+            when regexp_matches(time_control, '^\d+/\d+$')
+                then 1800
             else 0
         end as base_seconds,
 
