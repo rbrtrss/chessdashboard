@@ -7,9 +7,6 @@ select
     sum(case when my_result = 'loss' then 1 else 0 end) as losses,
     sum(case when my_result = 'draw' then 1 else 0 end) as draws,
     round(100.0 * sum(case when my_result = 'win' then 1 else 0 end) / count(*), 1) as win_pct,
-    min(my_rating) as rating_min,
-    max(my_rating) as rating_max,
-    round(avg(my_rating), 0) as rating_avg,
     min(played_at) as first_game,
     max(played_at) as last_game
 from {{ ref('fct_games') }}
