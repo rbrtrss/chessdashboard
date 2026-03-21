@@ -287,7 +287,7 @@ Add these repository secrets for the CI/CD workflows:
 - [x] 5.1 Unit tests for ingestion clients (Lichess, Chess.com)
 - 5.2 Unit tests for PGN parser
 - 5.3 Unit tests for MotherDuck loader
-- 5.4 dbt tests in `transform/tests/`
+- [x] 5.4 dbt tests in `transform/tests/`
 
 ### 6. CI/CD (`.github/workflows/`)
 
