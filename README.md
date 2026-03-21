@@ -42,11 +42,16 @@ chessdashboard/
 ├── transform/                    # dbt project root
 │   ├── dbt_project.yml
 │   ├── profiles.yml              # MotherDuck connection via env var
+│   ├── seeds/
+│   │   └── eco_codes.csv         # ECO opening codes (A00–E99)
 │   ├── models/
 │   │   ├── staging/
 │   │   │   ├── _stg_sources.yml  # Source definition → raw schema
-│   │   │   └── stg_games.sql     # Dedup, cast, normalize
+│   │   │   ├── _stg_models.yml   # Staging model tests
+│   │   │   └── stg_games.sql     # Time control parsing, player perspective
 │   │   └── marts/
+│   │       ├── _marts_models.yml # Mart model tests
+│   │       ├── fct_games.sql     # Fact table — joins stg_games + ECO seed
 │   │       ├── player_stats.sql
 │   │       ├── opening_stats.sql
 │   │       └── monthly_win_rate.sql
@@ -167,27 +172,28 @@ The dashboard connects to MotherDuck using the token from `.streamlit/secrets.to
 
 ### Staging
 
-**`stg_games`** — One row per game, deduplicated across sources, with normalized columns:
+**`stg_games`** — One row per game, with time control parsing and player perspective derived from `LICHESS_USERNAME` / `CHESSCOM_USERNAME` env vars:
 
 | Column | Type | Description |
 |---|---|---|
 | `game_id` | `VARCHAR` | Unique identifier (source-prefixed) |
 | `source` | `VARCHAR` | `lichess` or `chesscom` |
 | `played_at` | `TIMESTAMP` | Game start time (UTC) |
-| `white_username` | `VARCHAR` | White player |
-| `black_username` | `VARCHAR` | Black player |
-| `white_rating` | `INTEGER` | White Elo at game time |
-| `black_rating` | `INTEGER` | Black Elo at game time |
-| `result` | `VARCHAR` | `white`, `black`, or `draw` |
+| `my_color` | `VARCHAR` | `white` or `black` (which side I played) |
+| `my_result` | `VARCHAR` | `win`, `loss`, or `draw` |
+| `my_rating` | `INTEGER` | My Elo at game time |
+| `opponent_rating` | `INTEGER` | Opponent Elo at game time |
 | `eco` | `VARCHAR` | ECO opening code |
-| `time_control` | `VARCHAR` | Time control string |
+| `time_control` | `VARCHAR` | Raw time control string |
+| `time_category` | `VARCHAR` | `bullet`, `blitz`, `rapid`, or `classical` |
 | `moves` | `VARCHAR` | Move list |
 
 ### Marts
 
-- **`player_stats`** — Win/loss/draw counts and win rate per player, source, and color
-- **`opening_stats`** — Performance by ECO code: games played, win rate, avg rating
-- **`monthly_win_rate`** — Win rate trend by month for time-series charts
+- **`fct_games`** — Central fact table joining `stg_games` with `eco_codes` seed for opening names and variants
+- **`player_stats`** — Win/loss/draw counts and win rate by source, color, and time category
+- **`opening_stats`** — Performance by ECO code and time category: games played, win rate, avg ratings
+- **`monthly_win_rate`** — Win rate trend by month, source, time category, and color
 
 ## CI/CD
 
@@ -262,13 +268,13 @@ Add these repository secrets for the CI/CD workflows:
 
 ### 3. Transform Layer (`transform/`)
 
-- 3.1 `dbt_project.yml` — dbt project config
-- 3.2 `profiles.yml` — MotherDuck connection via env var
-- 3.3 `models/staging/_stg_sources.yml` — source definition pointing to `raw` schema
-- 3.4 `models/staging/stg_games.sql` — dedup, cast, normalize
-- 3.5 `models/marts/player_stats.sql` — win/loss/draw counts + win rate per player/source/color
-- 3.6 `models/marts/opening_stats.sql` — performance by ECO code
-- 3.7 `models/marts/monthly_win_rate.sql` — win rate trend by month
+- ~~3.1 `dbt_project.yml` — dbt project config~~ ✓ done
+- ~~3.2 `profiles.yml` — MotherDuck connection via env var~~ ✓ done
+- ~~3.3 `models/staging/_stg_sources.yml` — source definition pointing to `raw` schema~~ ✓ done
+- ~~3.4 `models/staging/stg_games.sql` — dedup, cast, normalize~~ ✓ done
+- ~~3.5 `models/marts/player_stats.sql` — win/loss/draw counts + win rate per source/color/time category~~ ✓ done
+- ~~3.6 `models/marts/opening_stats.sql` — performance by ECO code~~ ✓ done
+- ~~3.7 `models/marts/monthly_win_rate.sql` — win rate trend by month~~ ✓ done
 
 ### 4. Dashboard Layer (`dashboard/`)
 
