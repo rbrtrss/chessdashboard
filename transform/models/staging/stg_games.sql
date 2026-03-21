@@ -6,7 +6,7 @@ parsed as (
     select
         game_id,
         source,
-        played_at,
+        to_timestamp(played_at) as played_at,
         white_username,
         black_username,
         white_rating,
