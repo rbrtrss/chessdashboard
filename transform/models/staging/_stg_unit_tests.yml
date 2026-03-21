@@ -1,0 +1,199 @@
+unit_tests:
+
+  - name: test_lichess_milliseconds
+    description: "Lichess millisecond time_control (180000ms) should parse to blitz"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "lichess", played_at: "2024-01-01", white_username: "testuser", black_username: "opponent", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "180000", moves: "e4 e5"}
+    expect:
+      rows:
+        - {game_id: "g1", time_category: "blitz"}
+
+  - name: test_chesscom_base_increment
+    description: "Chess.com base+increment format (180+2) should parse correctly"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "chesscom", played_at: "2024-01-01", white_username: "testplayer", black_username: "opponent", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "180+2", moves: "e4 e5"}
+    expect:
+      rows:
+        - {game_id: "g1", time_category: "blitz"}
+
+  - name: test_plain_seconds
+    description: "Plain seconds time_control (300) should parse to blitz"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "chesscom", played_at: "2024-01-01", white_username: "testplayer", black_username: "opponent", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "300", moves: "e4 e5"}
+    expect:
+      rows:
+        - {game_id: "g1", time_category: "blitz"}
+
+  - name: test_lichess_speed_strings
+    description: "Lichess speed string time_controls map to correct categories"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "lichess", played_at: "2024-01-01", white_username: "testuser", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "bullet", moves: "e4"}
+          - {game_id: "g2", source: "lichess", played_at: "2024-01-01", white_username: "testuser", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "blitz", moves: "e4"}
+          - {game_id: "g3", source: "lichess", played_at: "2024-01-01", white_username: "testuser", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "rapid", moves: "e4"}
+          - {game_id: "g4", source: "lichess", played_at: "2024-01-01", white_username: "testuser", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "classical", moves: "e4"}
+          - {game_id: "g5", source: "lichess", played_at: "2024-01-01", white_username: "testuser", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "ultrabullet", moves: "e4"}
+    expect:
+      rows:
+        - {game_id: "g1", time_category: "bullet"}
+        - {game_id: "g2", time_category: "blitz"}
+        - {game_id: "g3", time_category: "rapid"}
+        - {game_id: "g4", time_category: "classical"}
+        - {game_id: "g5", time_category: "bullet"}
+
+  - name: test_time_category_boundaries
+    description: "Time category boundaries are correctly assigned"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "chesscom", played_at: "2024-01-01", white_username: "testplayer", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "179", moves: "e4"}
+          - {game_id: "g2", source: "chesscom", played_at: "2024-01-01", white_username: "testplayer", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "180", moves: "e4"}
+          - {game_id: "g3", source: "chesscom", played_at: "2024-01-01", white_username: "testplayer", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "599", moves: "e4"}
+          - {game_id: "g4", source: "chesscom", played_at: "2024-01-01", white_username: "testplayer", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "600", moves: "e4"}
+          - {game_id: "g5", source: "chesscom", played_at: "2024-01-01", white_username: "testplayer", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "1799", moves: "e4"}
+          - {game_id: "g6", source: "chesscom", played_at: "2024-01-01", white_username: "testplayer", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "1800", moves: "e4"}
+    expect:
+      rows:
+        - {game_id: "g1", time_category: "bullet"}
+        - {game_id: "g2", time_category: "blitz"}
+        - {game_id: "g3", time_category: "blitz"}
+        - {game_id: "g4", time_category: "rapid"}
+        - {game_id: "g5", time_category: "rapid"}
+        - {game_id: "g6", time_category: "classical"}
+
+  - name: test_increment_shifts_category
+    description: "Increment (60+3) shifts total to 180, making it blitz not bullet"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "chesscom", played_at: "2024-01-01", white_username: "testplayer", black_username: "opp", white_rating: 1500, black_rating: 1500, result: "white", eco: "B00", time_control: "60+3", moves: "e4"}
+    expect:
+      rows:
+        - {game_id: "g1", time_category: "blitz"}
+
+  - name: test_my_color_white
+    description: "Player playing white is correctly identified (case-insensitive)"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "lichess", played_at: "2024-01-01", white_username: "TestUser", black_username: "opponent", white_rating: 1500, black_rating: 1600, result: "white", eco: "B00", time_control: "300", moves: "e4"}
+    expect:
+      rows:
+        - {game_id: "g1", my_color: "white"}
+
+  - name: test_my_color_black
+    description: "Player playing black is correctly identified on chess.com"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "chesscom", played_at: "2024-01-01", white_username: "opponent", black_username: "TestPlayer", white_rating: 1500, black_rating: 1600, result: "black", eco: "B00", time_control: "300", moves: "e4"}
+    expect:
+      rows:
+        - {game_id: "g1", my_color: "black"}
+
+  - name: test_my_result_win
+    description: "Result=white with my_color=white should be a win"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "lichess", played_at: "2024-01-01", white_username: "testuser", black_username: "opponent", white_rating: 1500, black_rating: 1600, result: "white", eco: "B00", time_control: "300", moves: "e4"}
+    expect:
+      rows:
+        - {game_id: "g1", my_result: "win"}
+
+  - name: test_my_result_loss
+    description: "Result=black with my_color=white should be a loss"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "lichess", played_at: "2024-01-01", white_username: "testuser", black_username: "opponent", white_rating: 1500, black_rating: 1600, result: "black", eco: "B00", time_control: "300", moves: "e4"}
+    expect:
+      rows:
+        - {game_id: "g1", my_result: "loss"}
+
+  - name: test_my_result_draw
+    description: "Result=draw should be a draw regardless of color"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "lichess", played_at: "2024-01-01", white_username: "testuser", black_username: "opponent", white_rating: 1500, black_rating: 1600, result: "draw", eco: "B00", time_control: "300", moves: "e4"}
+    expect:
+      rows:
+        - {game_id: "g1", my_result: "draw"}
+
+  - name: test_rating_assignment
+    description: "Ratings are assigned based on my_color"
+    model: stg_games
+    overrides:
+      vars:
+        lichess_username: "'testuser'"
+        chesscom_username: "'testplayer'"
+    given:
+      - input: source('raw', 'games')
+        rows:
+          - {game_id: "g1", source: "lichess", played_at: "2024-01-01", white_username: "opponent", black_username: "testuser", white_rating: 1500, black_rating: 1600, result: "white", eco: "B00", time_control: "300", moves: "e4"}
+    expect:
+      rows:
+        - {game_id: "g1", my_rating: 1600, opponent_rating: 1500}

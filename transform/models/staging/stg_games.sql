@@ -34,7 +34,7 @@ parsed as (
             when lower(time_control) = 'blitz' then 300
             when lower(time_control) = 'rapid' then 600
             when lower(time_control) = 'classical' then 1800
-            when lower(time_control) = 'ultraBullet' then 30
+            when lower(time_control) = 'ultrabullet' then 30
             else 0
         end as base_seconds,
 
