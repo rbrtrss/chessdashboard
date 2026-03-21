@@ -48,16 +48,16 @@ parsed as (
         -- Determine my_color
         case
             when source = 'lichess'
-                and lower(white_username) = lower({{ var('lichess_username') }})
+                and lower(white_username) = lower('{{ var('lichess_username') }}')
                 then 'white'
             when source = 'lichess'
-                and lower(black_username) = lower({{ var('lichess_username') }})
+                and lower(black_username) = lower('{{ var('lichess_username') }}')
                 then 'black'
             when source = 'chesscom'
-                and lower(white_username) = lower({{ var('chesscom_username') }})
+                and lower(white_username) = lower('{{ var('chesscom_username') }}')
                 then 'white'
             when source = 'chesscom'
-                and lower(black_username) = lower({{ var('chesscom_username') }})
+                and lower(black_username) = lower('{{ var('chesscom_username') }}')
                 then 'black'
             else 'unknown'
         end as my_color

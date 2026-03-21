@@ -5,8 +5,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -20,8 +20,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -35,8 +35,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -50,8 +50,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -73,8 +73,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -98,8 +98,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -113,8 +113,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -128,8 +128,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -143,8 +143,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -158,8 +158,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -173,8 +173,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:
@@ -188,8 +188,8 @@ unit_tests:
     model: stg_games
     overrides:
       vars:
-        lichess_username: "'testuser'"
-        chesscom_username: "'testplayer'"
+        lichess_username: "testuser"
+        chesscom_username: "testplayer"
     given:
       - input: source('raw', 'games')
         rows:

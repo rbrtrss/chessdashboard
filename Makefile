@@ -1,3 +1,6 @@
+-include .env
+export
+
 .PHONY: setup ingest transform dash test
 
 setup:
