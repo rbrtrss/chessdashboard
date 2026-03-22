@@ -284,10 +284,10 @@ Add these repository secrets for the CI/CD workflows:
 
 ### 5. Tests (`tests/`)
 
-- [x] 5.1 Unit tests for ingestion clients (Lichess, Chess.com)
+- ~~5.1 Unit tests for ingestion clients (Lichess, Chess.com)~~ ✓ done
 - 5.2 Unit tests for PGN parser
 - 5.3 Unit tests for MotherDuck loader
-- [x] 5.4 dbt tests in `transform/tests/`
+- ~~5.4 dbt tests in `transform/tests/`~~ ✓ done
 
 ### 6. CI/CD (`.github/workflows/`)
 
@@ -296,13 +296,13 @@ Add these repository secrets for the CI/CD workflows:
 
 ### 7. Project Files
 
-- 7.1 `pyproject.toml` — all Python dependencies via `uv`
-- 7.2 `Makefile` — `make ingest`, `make transform`, `make dash`
-- 7.3 `.env.example` — template with required env vars
+- ~~7.1 `pyproject.toml` — all Python dependencies via `uv`~~ ✓ done
+- ~~7.2 `Makefile` — `make ingest`, `make transform`, `make dash`~~ ✓ done
+- ~~7.3 `.env.example` — template with required env vars~~ ✓ done
 
 ### 8. Deployment
 
-- 8.1 Add GitHub Actions secrets (`MOTHERDUCK_TOKEN`, `LICHESS_USERNAME`, `CHESSCOM_USERNAME`)
+- ~~8.1 Add GitHub Actions secrets (`MOTHERDUCK_TOKEN`, `LICHESS_USERNAME`, `CHESSCOM_USERNAME`)~~ ✓ done
 - 8.2 Deploy dashboard to Streamlit Community Cloud
 
 ## License
