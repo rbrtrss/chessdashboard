@@ -22,25 +22,20 @@ models:
         tests:
           - not_null
 
-  - name: player_stats
+  - name: daily_results
     description: >
-      Aggregated player statistics by source, color, and time category.
+      Daily game result counts by source and time category.
     columns:
-      - name: games_played
+      - name: game_date
+        tests:
+          - not_null
+      - name: games
         tests:
           - not_null
 
   - name: opening_stats
     description: >
-      Aggregated opening statistics by ECO code and time category.
-    columns:
-      - name: games_played
-        tests:
-          - not_null
-
-  - name: monthly_win_rate
-    description: >
-      Monthly win rate breakdown by source, time category, and color.
+      Aggregated opening statistics by ECO code, source, date, and time category.
     columns:
       - name: games_played
         tests:

@@ -1,4 +1,7 @@
 select
+    source,
+    played_at::date as game_date,
+    my_color,
     eco,
     opening_name,
     opening_variant,
@@ -9,4 +12,4 @@ select
     sum(case when my_result = 'draw' then 1 else 0 end) as draws,
     round(100.0 * sum(case when my_result = 'win' then 1 else 0 end) / count(*), 1) as win_pct
 from {{ ref('fct_games') }}
-group by eco, opening_name, opening_variant, time_category
+group by source, played_at::date, my_color, eco, opening_name, opening_variant, time_category

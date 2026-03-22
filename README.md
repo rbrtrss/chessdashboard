@@ -21,7 +21,7 @@ The pipeline has three decoupled layers that communicate through MotherDuck sche
 | Layer | Directory | Responsibility |
 |---|---|---|
 | **Extract & Load** | `ingestion/` | Fetch games from Lichess (NDJSON) and Chess.com (PGN archives), parse into a common schema, load into MotherDuck `raw.games` |
-| **Transform** | `transform/` | dbt project: staging model deduplicates and normalizes, mart models compute player stats, opening stats, and monthly win rates |
+| **Transform** | `transform/` | dbt project: staging model deduplicates and normalizes, mart models compute daily results, opening stats by color, and a central fact table |
 | **Visualize** | `dashboard/` | Streamlit app reading directly from MotherDuck `analytics` schema |
 
 Orchestration runs on GitHub Actions: a daily cron triggers ingestion followed by `dbt build`, and a CI workflow runs lint + tests on every PR.
@@ -52,9 +52,8 @@ chessdashboard/
 │   │   └── marts/
 │   │       ├── _marts_models.yml # Mart model tests
 │   │       ├── fct_games.sql     # Fact table — joins stg_games + ECO seed
-│   │       ├── player_stats.sql
-│   │       ├── opening_stats.sql
-│   │       └── monthly_win_rate.sql
+│   │       ├── daily_results.sql # Daily game counts by result, source, time control
+│   │       └── opening_stats.sql # Opening performance by color, source, date
 │   ├── tests/
 │   └── macros/
 │
@@ -193,9 +192,8 @@ The dashboard connects to MotherDuck using the `MOTHERDUCK_TOKEN` environment va
 ### Marts
 
 - **`fct_games`** — Central fact table joining `stg_games` with `eco_codes` seed for opening names, variants, player rating, and opponent strength classification
-- **`player_stats`** — Win/loss/draw counts, win rate, and date range by source, color, and time category
-- **`opening_stats`** — Performance by ECO code, opening name/variant, and time category: games played, wins, losses, draws, and win rate
-- **`monthly_win_rate`** — Win rate trend by month, source, time category, and color
+- **`daily_results`** — Daily game counts grouped by result, source, and time category; drives the results-over-time chart
+- **`opening_stats`** — Opening performance by ECO code, color, source, and date: games played, wins, losses, draws, and win rate; drives the opening donut charts
 
 ## CI/CD
 
@@ -274,9 +272,8 @@ Add these repository secrets for the CI/CD workflows:
 - ~~3.2 `profiles.yml` — MotherDuck connection via env var~~ ✓ done
 - ~~3.3 `models/staging/_stg_sources.yml` — source definition pointing to `raw` schema~~ ✓ done
 - ~~3.4 `models/staging/stg_games.sql` — dedup, cast, normalize~~ ✓ done
-- ~~3.5 `models/marts/player_stats.sql` — win/loss/draw counts + win rate per source/color/time category~~ ✓ done
-- ~~3.6 `models/marts/opening_stats.sql` — performance by ECO code~~ ✓ done
-- ~~3.7 `models/marts/monthly_win_rate.sql` — win rate trend by month~~ ✓ done
+- ~~3.5 `models/marts/daily_results.sql` — daily game counts by result, source, and time category~~ ✓ done
+- ~~3.6 `models/marts/opening_stats.sql` — opening performance by color, source, and date~~ ✓ done
 
 ### 4. Dashboard Layer (`dashboard/`)
 
@@ -285,7 +282,7 @@ Add these repository secrets for the CI/CD workflows:
 ### 5. Tests (`tests/`)
 
 - ~~5.1 Unit tests for ingestion clients (Lichess, Chess.com)~~ ✓ done
-- 5.2 Unit tests for PGN parser
+- ~~5.2 Unit tests for normalizers (PGN parser, schema mapping)~~ ✓ done
 - 5.3 Unit tests for MotherDuck loader
 - ~~5.4 dbt tests in `transform/tests/`~~ ✓ done
 
