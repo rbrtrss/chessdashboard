@@ -59,10 +59,7 @@ chessdashboard/
 │   └── macros/
 │
 ├── dashboard/
-│   ├── app.py                    # Streamlit entry point
-│   ├── components/               # Chart helpers, filters
-│   └── .streamlit/
-│       └── secrets.toml          # MotherDuck token (gitignored)
+│   └── app.py                    # Streamlit entry point
 │
 ├── .github/workflows/
 │   ├── daily_pipeline.yml        # Cron → ingest → dbt build → dbt test
@@ -166,7 +163,7 @@ uv run dbt docs generate && uv run dbt docs serve
 uv run streamlit run dashboard/app.py
 ```
 
-The dashboard connects to MotherDuck using the token from `.streamlit/secrets.toml` (local) or Streamlit Community Cloud secrets (production).
+The dashboard connects to MotherDuck using the `MOTHERDUCK_TOKEN` environment variable loaded from `.env`.
 
 ## Data model
 
@@ -195,7 +192,7 @@ The dashboard connects to MotherDuck using the token from `.streamlit/secrets.to
 
 ### Marts
 
-- **`fct_games`** — Central fact table joining `stg_games` with `eco_codes` seed for opening names, variants, and opponent strength classification
+- **`fct_games`** — Central fact table joining `stg_games` with `eco_codes` seed for opening names, variants, player rating, and opponent strength classification
 - **`player_stats`** — Win/loss/draw counts, win rate, and date range by source, color, and time category
 - **`opening_stats`** — Performance by ECO code, opening name/variant, and time category: games played, wins, losses, draws, and win rate
 - **`monthly_win_rate`** — Win rate trend by month, source, time category, and color
@@ -283,9 +280,7 @@ Add these repository secrets for the CI/CD workflows:
 
 ### 4. Dashboard Layer (`dashboard/`)
 
-- 4.1 `app.py` — Streamlit entry point
-- 4.2 `components/` — chart helpers and filters
-- 4.3 `.streamlit/secrets.toml` — MotherDuck token (gitignored)
+- ~~4.1 `app.py` — Streamlit entry point with filters, Elo chart, results chart, and opening pie charts~~ ✓ done
 
 ### 5. Tests (`tests/`)
 
