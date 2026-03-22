@@ -6,7 +6,10 @@ parsed as (
     select
         game_id,
         source,
-        to_timestamp(played_at) as played_at,
+        case
+            when source = 'lichess' then to_timestamp(played_at / 1000)
+            else to_timestamp(played_at)
+        end as played_at,
         white_username,
         black_username,
         white_rating,

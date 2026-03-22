@@ -18,6 +18,7 @@ joined as (
         g.time_category,
         g.my_color,
         g.my_result,
+        g.my_rating,
         case
             when g.my_rating - g.opponent_rating < -200 then 'much_stronger'
             when g.my_rating - g.opponent_rating < -50 then 'stronger'
