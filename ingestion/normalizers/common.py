@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import chess.pgn
 import io
-from typing import Iterator
 
 
 def _parse_result(raw: str) -> str:

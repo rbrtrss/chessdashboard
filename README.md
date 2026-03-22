@@ -62,7 +62,7 @@ chessdashboard/
 │
 ├── .github/workflows/
 │   ├── daily_pipeline.yml        # Cron → ingest → dbt build → dbt test
-│   └── ci.yml                    # On PR: lint, pytest, dbt build --target ci
+│   └── ci.yml                    # On push: lint, pytest, dbt build --target ci
 │
 ├── tests/                        # pytest for ingestion + loaders
 ├── pyproject.toml                # uv — all Python dependencies
@@ -208,7 +208,7 @@ Runs on cron at 06:00 UTC:
 
 ### CI (`.github/workflows/ci.yml`)
 
-Runs on every pull request:
+Runs on every push to `main`:
 
 1. Lint with `ruff`
 2. Run `pytest` for ingestion unit tests
@@ -283,13 +283,13 @@ Add these repository secrets for the CI/CD workflows:
 
 - ~~5.1 Unit tests for ingestion clients (Lichess, Chess.com)~~ ✓ done
 - ~~5.2 Unit tests for normalizers (PGN parser, schema mapping)~~ ✓ done
-- 5.3 Unit tests for MotherDuck loader
+- ~~5.3 Unit tests for pipeline/loader (build_pipeline, normalized resources, run)~~ ✓ done
 - ~~5.4 dbt tests in `transform/tests/`~~ ✓ done
 
 ### 6. CI/CD (`.github/workflows/`)
 
 - ~~6.1 `daily_pipeline.yml` — cron at 06:00 UTC: ingest → `dbt build`~~ ✓ done
-- 6.2 `ci.yml` — on PR: `ruff` lint → `pytest` → `dbt build --target ci`
+- ~~6.2 `ci.yml` — on push: `ruff` lint → `pytest` → `dbt build --target ci`~~ ✓ done
 
 ### 7. Project Files
 
