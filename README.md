@@ -2,6 +2,8 @@
 
 Cloud-native analytics pipeline for chess games from Lichess and Chess.com. Fetches games via public APIs, loads raw data into [MotherDuck](https://motherduck.com/) (cloud DuckDB), transforms with [dbt](https://www.getdbt.com/), and visualizes in a [Streamlit](https://streamlit.io/) dashboard.
 
+**Live dashboard:** [rbrtrss-chessdashboard.streamlit.app](https://rbrtrss-chessdashboard.streamlit.app/)
+
 ## Architecture
 
 ```mermaid
@@ -300,7 +302,7 @@ Add these repository secrets for the CI/CD workflows:
 ### 8. Deployment
 
 - ~~8.1 Add GitHub Actions secrets (`MOTHERDUCK_TOKEN`, `LICHESS_USERNAME`, `CHESSCOM_USERNAME`)~~ ✓ done
-- 8.2 Deploy dashboard to Streamlit Community Cloud
+- ~~8.2 Deploy dashboard to Streamlit Community Cloud~~ ✓ done
 
 ## License
 
