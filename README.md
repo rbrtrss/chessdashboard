@@ -60,7 +60,9 @@ chessdashboard/
 │   └── macros/
 │
 ├── dashboard/
-│   └── app.py                    # Streamlit entry point
+│   ├── app.py                    # Streamlit entry point
+│   └── pages/
+│       └── 1_Documentation.py    # In-app documentation page
 │
 ├── .github/workflows/
 │   ├── daily_pipeline.yml        # Cron → ingest → dbt build → dbt test

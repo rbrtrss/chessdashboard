@@ -100,16 +100,26 @@ def load_opening_results(source, time_categories, start, end):
 
 st.sidebar.header("Filters")
 
-platform = st.sidebar.radio("Platform", ["Both", "Chess.com", "Lichess"])
+platform = st.sidebar.radio(
+    "Platform",
+    ["Both", "Chess.com", "Lichess"],
+    help="Filter games by platform. 'Both' combines Lichess and Chess.com data.",
+)
 
 time_controls = st.sidebar.multiselect(
     "Time Control",
     options=["bullet", "blitz", "rapid", "classical"],
     default=["blitz", "rapid", "classical"],
+    help="Classified by total time (base + 40 × increment): bullet < 3 min, blitz < 10 min, rapid < 30 min, classical ≥ 30 min.",
 )
 
 min_date, max_date = load_date_range()
-date_option = st.sidebar.radio("Date Range", ["Last 7 days", "Last 30 days", "All time"], index=2)
+date_option = st.sidebar.radio(
+    "Date Range",
+    ["Last 7 days", "Last 30 days", "All time"],
+    index=2,
+    help="Filter by when the game was played. Range is relative to the most recent game.",
+)
 
 if date_option == "Last 7 days":
     start, end = max_date - pd.Timedelta(days=7), max_date
@@ -122,6 +132,19 @@ else:
 
 username = LICHESS_USERNAME or CHESSCOM_USERNAME or "Player"
 st.title(f"{username} Chess Review")
+
+with st.expander("About this dashboard"):
+    st.markdown(
+        """
+        Games from [Lichess](https://lichess.org) and [Chess.com](https://chess.com)
+        are fetched daily at 06:00 UTC via their public APIs, loaded into
+        [MotherDuck](https://motherduck.com) (cloud DuckDB), and transformed with
+        [dbt](https://www.getdbt.com/) into the tables powering these charts.
+
+        Data refreshes every 10 minutes in this dashboard.
+        Use the sidebar filters to slice by platform, time control, and date range.
+        """
+    )
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 
