@@ -212,7 +212,7 @@ Runs on every push to `main`:
 
 1. Lint with `ruff`
 2. Run `pytest` for ingestion unit tests
-3. Run `dbt build --target ci` against a separate CI schema in MotherDuck
+3. Run dbt unit tests (`dbt test --select test_type:unit --target ci`) against a local DuckDB
 
 ## Deployment
 

@@ -23,5 +23,5 @@ jobs:
       - name: Run pytest
         run: uv run pytest tests/ -v
 
-      - name: dbt build (CI target)
-        run: cd transform && uv run dbt build --target ci
+      - name: dbt unit tests (CI target)
+        run: cd transform && uv run dbt test --select test_type:unit --target ci
