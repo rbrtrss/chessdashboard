@@ -23,5 +23,20 @@ jobs:
       - name: Run pytest
         run: uv run pytest tests/ -v
 
+      - name: Create empty source table for dbt
+        run: |
+          uv run python -c "
+          import duckdb
+          con = duckdb.connect('transform/chessdashboard_ci.duckdb')
+          con.execute('CREATE SCHEMA IF NOT EXISTS raw')
+          con.execute('''CREATE TABLE IF NOT EXISTS raw.games (
+            game_id VARCHAR, source VARCHAR, played_at BIGINT,
+            white_username VARCHAR, black_username VARCHAR,
+            white_rating INTEGER, black_rating INTEGER,
+            result VARCHAR, eco VARCHAR, time_control VARCHAR, moves VARCHAR
+          )''')
+          con.close()
+          "
+
       - name: dbt unit tests (CI target)
         run: cd transform && uv run dbt test --select test_type:unit --target ci
