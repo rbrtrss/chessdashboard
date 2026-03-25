@@ -42,4 +42,6 @@ jobs:
       - name: Run dbt build
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          LICHESS_USERNAME: ${{ secrets.LICHESS_USERNAME }}
+          CHESSCOM_USERNAME: ${{ secrets.CHESSCOM_USERNAME }}
         run: make transform
