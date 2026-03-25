@@ -25,3 +25,21 @@ jobs:
           CHESSCOM_USERNAME: ${{ secrets.CHESSCOM_USERNAME }}
           DESTINATION: motherduck
         run: make ingest
+
+  transform:
+    needs: ingest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run dbt build
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+        run: make transform
